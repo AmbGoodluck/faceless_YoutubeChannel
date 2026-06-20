@@ -1,0 +1,12 @@
+name = "lights-out-approver"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+[vars]
+GH_OWNER = "AmbGoodluck"
+GH_REPO = "faceless_YoutubeChannel"
+WORKFLOW_FILE = "pipeline.yml"
+
+# Secrets (do NOT put here — set with `wrangler secret put NAME`):
+#   SLACK_SIGNING_SECRET
+#   GH_TOKEN

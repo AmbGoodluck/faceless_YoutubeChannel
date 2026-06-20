@@ -1,0 +1,51 @@
+# Move this file to  .github/workflows/pipeline.yml  (needs a token with 'workflow' scope,
+# or paste it via GitHub's web "Add file" editor).
+name: Lights Out Tales pipeline
+
+on:
+  schedule:
+    - cron: "0 6 * * *"        # daily script generation (UTC — adjust to wake before your 7am)
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "script | render | publish"
+        required: true
+        default: "script"
+      episode:
+        description: "episode slug (for render/publish)"
+        required: false
+        default: ""
+
+concurrency: lights-out-pipeline   # one run at a time
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write             # so it can commit script/state back
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Install ffmpeg + deps
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          pip install -r requirements.txt
+      - name: Run stage
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: |
+          python cloud/run_stage.py "${{ github.event.inputs.stage || 'script' }}" \
+            --episode "${{ github.event.inputs.episode }}"
+      - name: Commit state
+        run: |
+          git config user.name "lights-out-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add -f outputs/*/script.json outputs/*/narration.txt outputs/*/script.txt outputs/*/state.json content_queue.csv 2>/dev/null || true
+          git commit -m "pipeline: ${{ github.event.inputs.stage || 'script' }}" || echo "nothing to commit"
+          git push || echo "nothing to push"
