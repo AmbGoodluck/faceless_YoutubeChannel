@@ -18,7 +18,7 @@ import os, sys, csv, glob, argparse
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
-from src import generate_script, generate_voice, generate_visuals, render_video, clip_for_tiktok
+from src import generate_script, generate_voice, generate_visuals, render_video, clip_for_tiktok, notify
 
 
 def read_queue():
@@ -43,8 +43,9 @@ def cmd_script(rows):
     row = next((r for r in rows if r["status"] == "queued"), None)
     if not row:
         print("Queue empty — add rows to content_queue.csv."); return
-    generate_script.generate(row)
+    data = generate_script.generate(row)
     set_status(rows, row["id"], "script_ready")
+    notify.script_ready(row["id"], data)
     print(f"\n>>> CHECKPOINT 1: read outputs/{row['id']}-*/script.txt, then --render {row['id']}")
 
 
@@ -55,25 +56,28 @@ def cmd_render(rows, rid):
     script = json.load(open(os.path.join(out, "script.json")))
     generate_voice.make_voice(script["narration"], out)
     generate_visuals.make_visuals(script["scene_prompts"], out)
-    render_video.render(out)
+    final = render_video.render(out)
     set_status(rows, rid, "rendered")
+    notify.video_ready(rid, final)
     print(f"\n>>> CHECKPOINT 2: watch {out}/final.mp4, then --publish {rid}")
 
 
 def cmd_publish(rows, rid):
     out = _dir_for(rid)
     if not out: print(f"No render for id {rid}."); return
-    # YouTube upload (optional — skip if client_secret.json absent)
+    yt_id = None
+    # YouTube long-form upload (optional — skip if client_secret.json absent)
     if os.path.exists(os.path.join(os.path.dirname(__file__), "..", "client_secret.json")):
         from src import upload_youtube
-        upload_youtube.upload(out)
+        yt_id = upload_youtube.upload(out)
         set_status(rows, rid, "uploaded")
     else:
         print("[publish] no client_secret.json — skipping YouTube upload (upload final.mp4 by hand)")
-    # Always make the 3 TikTok clips + posting plan
+    # Always make the 3 TikTok / Shorts clips + posting plan
     clip_for_tiktok.clip_video(os.path.join(out, "final.mp4"))
     set_status(rows, rid, "clipped")
-    print(f"\n>>> Done. Schedule {out}/tiktok_part1..3.mp4 to TikTok at "
+    notify.published(rid, yt_id, out)
+    print(f"\n>>> Done. Queue {out}/tiktok_part1..3.mp4 in Metricool (TikTok + YouTube Shorts) at "
           f"{', '.join(config.TIKTOK_DAYPARTS)} (see tiktok_posting_plan.json).")
 
 

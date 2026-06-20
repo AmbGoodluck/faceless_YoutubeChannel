@@ -19,6 +19,7 @@ jobs:
       - name: Generate next script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: python src/run_pipeline.py --script
       - name: Commit the new script
         run: |
