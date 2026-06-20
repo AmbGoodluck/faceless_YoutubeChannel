@@ -1,0 +1,29 @@
+name: Daily script generation
+
+# Runs every morning and generates the next queued episode's script, then commits it.
+# Video submission + posting stay manual until you trust the output (authenticity rule).
+on:
+  schedule:
+    - cron: "0 13 * * *"   # 13:00 UTC daily — adjust to your timezone
+  workflow_dispatch: {}      # also lets you run it by hand from the Actions tab
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Generate next script
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python src/run_pipeline.py --script
+      - name: Commit the new script
+        run: |
+          git config user.name "lights-out-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add outputs content_queue.csv
+          git commit -m "auto: next episode script" || echo "nothing to commit"
+          git push
