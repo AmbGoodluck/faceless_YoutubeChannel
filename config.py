@@ -52,9 +52,21 @@ TTS_PITCH = "-2Hz"
 # ---------------------------------------------------------------- Visuals (Pollinations, FREE)
 POLLINATIONS_BASE = "https://image.pollinations.ai/prompt"
 IMAGE_W, IMAGE_H = 1080, 1920  # vertical
-# Style suffix appended to every scene prompt for a consistent dark look:
-VISUAL_STYLE = ("dark cinematic, moody low-key lighting, film grain, desaturated, "
-                "amber practical light, no faces, no text, photorealistic, 4k")
+# Style presets — pick one by name in ACTIVE_STYLE below. Compare them with:
+#   python src/sample_styles.py
+STYLES = {
+    "photoreal": ("dark cinematic, moody low-key lighting, film grain, desaturated, "
+                  "amber practical light, no faces, no text, photorealistic, 4k"),
+    "ink_sketch": ("eerie pen and ink illustration, heavy cross-hatching, vintage "
+                   "engraving, storybook horror, monochrome with a single amber accent, "
+                   "no faces, no text"),
+    "painterly": ("moody digital painting, atmospheric concept art, dramatic chiaroscuro, "
+                  "muted palette with amber light, brush texture, no faces, no text"),
+    "cartoon": ("stylized 2d cartoon illustration, bold clean shapes, cel shaded, "
+                "moody night palette, amber light, slight horror mood, no faces, no text"),
+}
+ACTIVE_STYLE = "photoreal"          # <-- change to switch the whole channel's look
+VISUAL_STYLE = STYLES[ACTIVE_STYLE]
 
 # ---------------------------------------------------------------- TikTok clipping
 TIKTOK_CLIPS_PER_VIDEO = 3
