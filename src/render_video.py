@@ -20,6 +20,9 @@ def _audio_dur(path: str) -> float:
 
 def render(out_dir: str) -> str:
     script = json.load(open(os.path.join(out_dir, "script.json")))
+    # captions follow the edited narration.txt if present
+    nt = os.path.join(out_dir, "narration.txt")
+    narration = open(nt).read().strip() if os.path.exists(nt) else script["narration"]
     voice = os.path.join(out_dir, "voice.mp3")
     scenes = sorted(
         [os.path.join(out_dir, f) for f in os.listdir(out_dir) if f.startswith("scene_")])
@@ -55,7 +58,7 @@ def render(out_dir: str) -> str:
     # Captions: generate an SRT from the narration timed evenly across the audio,
     # then burn it. (Swap for Whisper word-timing later if you want perfect sync.)
     srt = os.path.join(out_dir, "captions.srt")
-    _even_srt(script["narration"], total, srt)
+    _even_srt(narration, total, srt)
 
     final = os.path.join(out_dir, "final.mp4")
     subprocess.run([

@@ -77,12 +77,26 @@ Return ONLY a JSON object with exactly these keys:
     os.makedirs(out_dir, exist_ok=True)
     with open(os.path.join(out_dir, "script.json"), "w") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+    # narration.txt is the EDITABLE source of truth for the voiceover. Edit this
+    # file (plain text, no JSON) and the next --render uses your version.
+    with open(os.path.join(out_dir, "narration.txt"), "w") as f:
+        f.write(data["narration"])
     with open(os.path.join(out_dir, "script.txt"), "w") as f:
         f.write(f"{data['title']}\n\n{data['narration']}\n\n--- SCENES ---\n")
         f.write("\n".join(f"{i+1}. {s}" for i, s in enumerate(data["scene_prompts"])))
 
     print(f"[script] {slug} -> {out_dir}/script.json")
     return data
+
+
+def load_narration(out_dir: str) -> str:
+    """Prefer the editable narration.txt so the user's edits take effect."""
+    txt = os.path.join(out_dir, "narration.txt")
+    if os.path.exists(txt):
+        with open(txt) as f:
+            return f.read().strip()
+    with open(os.path.join(out_dir, "script.json")) as f:
+        return json.load(f)["narration"]
 
 
 if __name__ == "__main__":

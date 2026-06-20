@@ -33,7 +33,8 @@ def script_ready(rid: str, data: dict):
             {"type": "header", "text": {"type": "plain_text", "text": f"Script {rid}: {data.get('title','')}"[:150]}},
             {"type": "section", "text": {"type": "mrkdwn", "text": f"```{narration[:2800]}```"}},
             {"type": "context", "elements": [{"type": "mrkdwn",
-                "text": f"Approve & build video:  `python src/run_pipeline.py --render {rid}`"}]},
+                "text": (f"Edit `outputs/.../narration.txt` if you want changes, then build the video:  "
+                         f"`python src/run_pipeline.py --render {rid}`")}]},
         ],
     )
 

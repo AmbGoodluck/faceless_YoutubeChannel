@@ -54,7 +54,8 @@ def cmd_render(rows, rid):
     if not out: print(f"No script for id {rid}; run --script."); return
     import json
     script = json.load(open(os.path.join(out, "script.json")))
-    generate_voice.make_voice(script["narration"], out)
+    narration = generate_script.load_narration(out)   # uses your edited narration.txt
+    generate_voice.make_voice(narration, out)
     generate_visuals.make_visuals(script["scene_prompts"], out)
     final = render_video.render(out)
     set_status(rows, rid, "rendered")
