@@ -61,6 +61,15 @@ def upload(out_dir: str, privacy="public") -> str:
         if status:
             print(f"[youtube] {int(status.progress()*100)}%")
     vid = resp["id"]
+    # set the custom thumbnail if we generated one
+    thumb = os.path.join(out_dir, "thumbnail.jpg")
+    if os.path.exists(thumb):
+        try:
+            yt.thumbnails().set(videoId=vid,
+                media_body=googleapiclient.http.MediaFileUpload(thumb)).execute()
+            print("[youtube] thumbnail set")
+        except Exception as e:
+            print(f"[youtube] thumbnail skipped: {e}")
     print(f"[youtube] uploaded https://youtu.be/{vid}")
     return vid
 

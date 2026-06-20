@@ -18,7 +18,7 @@ import os, sys, csv, glob, argparse
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
-from src import generate_script, generate_voice, generate_visuals, render_video, clip_for_tiktok, notify
+from src import generate_script, generate_voice, generate_visuals, render_video, clip_for_tiktok, notify, package_post
 
 
 def read_queue():
@@ -74,12 +74,13 @@ def cmd_publish(rows, rid):
         set_status(rows, rid, "uploaded")
     else:
         print("[publish] no client_secret.json — skipping YouTube upload (upload final.mp4 by hand)")
-    # Always make the 3 TikTok / Shorts clips + posting plan
+    # Always make the 3 TikTok / Shorts clips, then package for manual posting
     clip_for_tiktok.clip_video(os.path.join(out, "final.mp4"))
+    dest = package_post.package(out)   # thumbnail + POST_KIT.md + queue the 3 clips
     set_status(rows, rid, "clipped")
-    notify.published(rid, yt_id, out)
-    print(f"\n>>> Done. Queue {out}/tiktok_part1..3.mp4 in Metricool (TikTok + YouTube Shorts) at "
-          f"{', '.join(config.TIKTOK_DAYPARTS)} (see tiktok_posting_plan.json).")
+    notify.published(rid, yt_id, dest)
+    print(f"\n>>> Done. Clips + thumbnail + POST_KIT.md in {dest}/ . "
+          f"The 7am/12pm/4pm reminder will serve each clip for posting.")
 
 
 def main():

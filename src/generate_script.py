@@ -61,10 +61,14 @@ Return ONLY a JSON object with exactly these keys:
   "narration": full voiceover script, {lo}-{hi} words, plain spoken sentences
   "scene_prompts": array of {config.SCENES_PER_VIDEO} short visual descriptions, one per beat,
                    each a concrete dark cinematic image with NO people's faces and NO text
-  "youtube_title": click-worthy title under 70 chars
-  "youtube_description": 2-3 sentences, with an "original fiction" note at the end
-  "hashtags": array of 8-12 tags without the # symbol
-  "tiktok_caption": under 150 chars, ends on a curiosity hook"""
+  "youtube_title": viral curiosity-gap title under 70 chars (no clickbait lies); make people NEED to click
+  "youtube_description": 2-3 sentences with naturally woven search keywords (scary story, true horror,
+                         creepy, nosleep) and a subscribe CTA, ending with an "original fiction" note
+  "hashtags": array of 10-12 tags without the # symbol, mixing broad (horror, scarystories, creepy)
+              and niche (nosleep, horrortok, storytime) tags
+  "tiktok_caption": under 150 chars, ends on a curiosity hook
+  "thumbnail_text": 2-4 punchy words for the YouTube thumbnail (uppercase impact, e.g. "SHE WASN'T ALONE")
+  "pinned_comment": one short engagement-bait question to pin in the comments (drives replies)"""
 
     raw = _call_gemini(config.BRAND_SYSTEM_PROMPT, user_prompt)
     data = json.loads(_extract_json(raw))

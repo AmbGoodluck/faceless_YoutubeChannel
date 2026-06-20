@@ -3,9 +3,10 @@ client_secret.json
 token.json
 outputs/*
 !outputs/.gitkeep
+to_post/*
+!to_post/.gitkeep
 __pycache__/
 *.pyc
 .DS_Store
 venv/
 .venv/
-style_samples/

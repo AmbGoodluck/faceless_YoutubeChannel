@@ -70,7 +70,7 @@ VISUAL_STYLE = STYLES[ACTIVE_STYLE]
 
 # ---------------------------------------------------------------- TikTok clipping
 TIKTOK_CLIPS_PER_VIDEO = 3
-TIKTOK_DAYPARTS = ["08:00", "13:00", "19:00"]   # morning / afternoon / evening (local)
+TIKTOK_DAYPARTS = ["07:00", "12:00", "16:00"]   # 7am / 12pm / 4pm (local)
 CLIP_RATIO = "9:16"
 CLIP_CTA = "Full story on YouTube — @thelightsouttales"
 CLIP_LABELS = ["PART 1", "PART 2", "PART 3"]
