@@ -18,16 +18,32 @@ def _call_gemini(system: str, user: str) -> str:
     body = {
         "system_instruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": [{"text": user}]}],
-        "generationConfig": {"temperature": 1.0, "maxOutputTokens": 2048,
-                             "responseMimeType": "application/json"},
+        "generationConfig": {
+            "temperature": 1.0,
+            "maxOutputTokens": 8192,
+            "responseMimeType": "application/json",
+            # 2.5 models burn output budget on hidden "thinking" tokens, which
+            # truncates the JSON. Turn it off so the full script comes back.
+            "thinkingConfig": {"thinkingBudget": 0},
+        },
     }
     r = requests.post(
         config.GEMINI_ENDPOINT,
         params={"key": os.environ["GEMINI_API_KEY"]},
-        json=body, timeout=90,
+        json=body, timeout=120,
     )
     r.raise_for_status()
-    return r.json()["candidates"][0]["content"]["parts"][0]["text"]
+    cand = r.json()["candidates"][0]
+    if cand.get("finishReason") == "MAX_TOKENS":
+        raise RuntimeError("Gemini hit the token limit; raise maxOutputTokens.")
+    return cand["content"]["parts"][0]["text"]
+
+
+def _extract_json(raw: str) -> str:
+    """Strip code fences and grab the outermost {...} so stray text can't break parsing."""
+    raw = re.sub(r"^```(json)?|```$", "", raw.strip(), flags=re.MULTILINE).strip()
+    start, end = raw.find("{"), raw.rfind("}")
+    return raw[start:end + 1] if start != -1 and end != -1 else raw
 
 
 def generate(row: dict) -> dict:
@@ -50,9 +66,8 @@ Return ONLY a JSON object with exactly these keys:
   "hashtags": array of 8-12 tags without the # symbol
   "tiktok_caption": under 150 chars, ends on a curiosity hook"""
 
-    raw = _call_gemini(config.BRAND_SYSTEM_PROMPT, user_prompt).strip()
-    raw = re.sub(r"^```(json)?|```$", "", raw, flags=re.MULTILINE).strip()
-    data = json.loads(raw)
+    raw = _call_gemini(config.BRAND_SYSTEM_PROMPT, user_prompt)
+    data = json.loads(_extract_json(raw))
 
     data["id"] = row["id"]
     data["title"] = row["title"]
