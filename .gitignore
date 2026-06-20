@@ -1,4 +1,6 @@
 .env
+client_secret.json
+token.json
 outputs/*
 !outputs/.gitkeep
 __pycache__/

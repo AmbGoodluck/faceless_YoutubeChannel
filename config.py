@@ -1,6 +1,14 @@
 """
-Lights Out Tales — pipeline configuration.
+Lights Out Tales — pipeline configuration ($0 stack).
 Brand voice + generation settings live here so every episode comes out consistent.
+
+FREE TOOLS USED:
+  - Script:   Google Gemini API (free tier, no credit card)
+  - Voice:    Microsoft Edge TTS (edge-tts, free, commercial-ok)
+  - Visuals:  Pollinations.ai (free image generation, no API key)
+  - Assembly: FFmpeg (free)
+  - Upload:   YouTube Data API (free quota)
+  - Schedule: GitHub Actions (free tier)
 """
 
 # ---------------------------------------------------------------- Channel brand
@@ -8,7 +16,6 @@ CHANNEL_NAME = "Lights Out Tales"
 HANDLE = "@thelightsouttales"
 ACCENT_HEX = "#C8932B"  # amber — locked
 
-# The system prompt that defines the storyteller voice. Used by generate_script.py.
 BRAND_SYSTEM_PROMPT = """\
 You are the head writer for "Lights Out Tales", a faceless horror storytelling channel.
 
@@ -26,43 +33,39 @@ OUTPUT: a tight script meant to be read aloud as a voiceover. Plain spoken sente
 no stage directions inside the narration, no headers, no markdown.
 """
 
-# ---------------------------------------------------------------- Generation
-# Short-form (TikTok / Shorts) target. Long-form is built by compiling 5 shorts.
-SHORTFORM_WORDS = (130, 170)      # ~30-60s of narration
-ANTHROPIC_MODEL = "claude-sonnet-4-6"   # script generation model
-SCENES_PER_VIDEO = 6              # number of distinct visual beats to prompt
+# ---------------------------------------------------------------- Script (Gemini, FREE)
+# Free key from https://aistudio.google.com/apikey  (no credit card)
+GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_ENDPOINT = (
+    "https://generativelanguage.googleapis.com/v1beta/models/"
+    f"{GEMINI_MODEL}:generateContent"
+)
+SHORTFORM_WORDS = (130, 170)   # ~30-60s of narration
+SCENES_PER_VIDEO = 6           # distinct visual beats
 
-# ---------------------------------------------------------------- Revid.ai video
-# Auth: a header named "key" with your Revid API key (Growth plan required).
-# Confirm the exact endpoint + body by clicking "Get API Code" on
-# https://www.typeframes.com/create  (revid.ai and Typeframes share one API).
-REVID_API_BASE = "https://www.revid.ai/api/public"
-REVID_CREATE_ENDPOINT = f"{REVID_API_BASE}/v2/render"
-REVID_STATUS_ENDPOINT = f"{REVID_API_BASE}/v2/status"  # poll with the returned pid
+# ---------------------------------------------------------------- Voice (Edge TTS, FREE)
+# List voices with:  edge-tts --list-voices | grep en-
+TTS_VOICE = "en-US-GuyNeural"  # deep, calm male narrator. Try en-GB-RyanNeural too.
+TTS_RATE = "-8%"               # slightly slower = more dread
+TTS_PITCH = "-2Hz"
 
-# Default render options — tune to taste, then re-grab via "Get API Code".
-REVID_DEFAULTS = {
-    "ratio": "9 / 16",            # vertical for TikTok / Shorts
-    "voiceId": "",                # set to a deep, calm narrator voice from your Revid account
-    "generationPreset": "DARKER", # dark, cinematic look that matches the brand
-    "captionPresetName": "Wrap 1",
-    "hasToGenerateVoice": True,
-    "hasToTranscript": True,      # burned-in captions
-    "mediaType": "stockVideo",    # or "movingImage" for AI footage
-}
+# ---------------------------------------------------------------- Visuals (Pollinations, FREE)
+POLLINATIONS_BASE = "https://image.pollinations.ai/prompt"
+IMAGE_W, IMAGE_H = 1080, 1920  # vertical
+# Style suffix appended to every scene prompt for a consistent dark look:
+VISUAL_STYLE = ("dark cinematic, moody low-key lighting, film grain, desaturated, "
+                "amber practical light, no faces, no text, photorealistic, 4k")
 
 # ---------------------------------------------------------------- TikTok clipping
-# Every YouTube video is split into N vertical clips, each posted at a daypart.
 TIKTOK_CLIPS_PER_VIDEO = 3
 TIKTOK_DAYPARTS = ["08:00", "13:00", "19:00"]   # morning / afternoon / evening (local)
-CLIP_RATIO = "9:16"                              # vertical
+CLIP_RATIO = "9:16"
 CLIP_CTA = "Full story on YouTube — @thelightsouttales"
-CLIP_LABELS = ["PART 1", "PART 2", "PART 3"]    # burned onto each clip
-CLIP_OVERLAP_SEC = 1.0                           # tiny overlap so cuts don't feel abrupt
+CLIP_LABELS = ["PART 1", "PART 2", "PART 3"]
+CLIP_OVERLAP_SEC = 1.0
 
 # ---------------------------------------------------------------- Paths / status
 QUEUE_FILE = "content_queue.csv"
 OUTPUT_DIR = "outputs"
-# Queue status values the pipeline moves rows through:
-#   queued -> script_ready -> (you approve) -> submitted -> rendered -> (you approve) -> posted
-STATUS_FLOW = ["queued", "script_ready", "submitted", "rendered", "posted", "skipped"]
+# queued -> script_ready -> [approve] -> rendered -> [approve] -> uploaded -> clipped -> posted
+STATUS_FLOW = ["queued", "script_ready", "rendered", "uploaded", "clipped", "posted", "skipped"]

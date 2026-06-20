@@ -1,126 +1,123 @@
-# Lights Out Tales — Automated Pipeline
+# Lights Out Tales — Automated Pipeline ($0 stack)
 
-A "script factory" for a faceless horror channel. It pulls the next idea from a
-queue, writes a finished script in the channel's exact voice, and hands it to
-**Revid.ai**, which generates the voiceover + visuals + captions and can auto-post
-to TikTok and YouTube. Two quick human checkpoints keep it inside YouTube's
-authenticity rules.
+A free, faceless horror-channel factory. It pulls the next idea from a queue,
+writes a script in the channel's voice, makes the voiceover + visuals, assembles a
+captioned vertical video, uploads it to YouTube, and clips it into 3 TikTok parts
+for morning / afternoon / evening. Two quick human checkpoints keep it inside
+YouTube's authenticity rules. **No paid subscriptions.**
 
 ```
-content_queue.csv ─▶ generate_script.py ─▶ [approve] ─▶ revid_client.py ─▶ [approve] ─▶ YouTube
-   (ideas)            (Claude, brand voice)  script.txt    (video+voice)     final cut      (full story)
-                                                                                  │
-                                                                  clip_for_tiktok.py
-                                                                                  │
-                                              3 vertical clips ─▶ TikTok @ 08:00 / 13:00 / 19:00
-                                              (PART 1 / 2 / 3, with "full story on YouTube" CTA)
+content_queue.csv ─▶ generate_script ─▶ [approve] ─▶ voice + visuals + render ─▶ [approve] ─▶ YouTube
+   (ideas)            (Gemini, free)       script.txt    (EdgeTTS+Pollinations+FFmpeg)  final.mp4   (full)
+                                                                                          │
+                                                                                clip_for_tiktok
+                                                                                          │
+                                                3 vertical clips ─▶ TikTok @ 08:00 / 13:00 / 19:00
 ```
 
----
+## What it costs: **$0/month**
 
-## What it costs
-
-| Service | Why | Plan needed |
+| Stage | Tool | Cost |
 |---|---|---|
-| Anthropic API | Writes the scripts | Pay-as-you-go, ~cents per script |
-| Revid.ai | Voiceover + visuals + captions + auto-post | **Growth plan** (required for API; ~$39/mo promo) |
-| GitHub Actions | Runs it on a daily timer | Free tier |
-
-> This path is **not** $0 — Revid's API needs the Growth plan. If you'd rather stay free, the alternative is the Edge-TTS + Pollinations + Remotion stack from the master plan (more setup, no monthly fee). You picked the automated-tool route, so this repo is built around Revid.
+| Script | Google Gemini API (free tier, no card) | $0 |
+| Voiceover | Microsoft Edge TTS (`edge-tts`) | $0 |
+| Visuals | Pollinations.ai (no key) | $0 |
+| Assembly + clipping | FFmpeg | $0 |
+| YouTube upload | YouTube Data API v3 | $0 (free quota) |
+| Scheduler | GitHub Actions free tier | $0 |
+| TikTok posting | TikTok native scheduler / Metricool free | $0 |
 
 ---
 
-## Step-by-step setup (do these in order)
+## Step-by-step setup (in order)
 
-### 1. Anthropic API key (script generation)
-1. Go to **https://console.anthropic.com** and sign in.
-2. Add a payment method under **Billing** (scripts cost ~$0.01–0.03 each).
-3. **Settings → API Keys → Create Key**. Copy it.
-
-### 2. Revid.ai account + API key (video)
-1. Sign up at **https://www.revid.ai** and subscribe to the **Growth** plan (API access requires it).
-2. Open **https://www.revid.ai/account** and copy your **API key**.
-3. In the Revid editor, pick a **deep, calm male narrator voice** and copy its `voiceId`.
-4. Go to **https://www.typeframes.com/create → "…" → "Get API Code"** and copy the
-   current request parameters. Paste any new fields into `build_payload()` in
-   `src/revid_client.py` and set `voiceId` + look in `config.py → REVID_DEFAULTS`.
-
-### 3. Connect your social accounts to Revid (auto-posting)
-1. In Revid, open the **Auto-Post / Social** settings.
-2. Connect **YouTube** (the Lights Out Tales channel) and **TikTok** (@thelightsouttales).
-3. Set posting times. Revid will publish approved renders straight to both.
-   *(TikTok's own API is hard to get directly — letting Revid post is the easy path.)*
-
-### 4. Run it locally first
+### 1. Install prerequisites
 ```bash
-git clone <this repo>
-cd faceless_YoutubeChannel
+git clone <this repo> && cd faceless_YoutubeChannel
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env          # then paste your real keys into .env
-export $(grep -v '^#' .env | xargs)   # load keys into your shell
-
-python src/run_pipeline.py            # writes the next script, stops for your review
-# read outputs/1-the-note-on-the-windshield/script.txt
-python src/run_pipeline.py --submit 1 # sends the approved script to Revid
+# FFmpeg (system, not pip):  macOS: brew install ffmpeg   |   Ubuntu: sudo apt install ffmpeg
 ```
 
-### 5. Put it on a schedule (GitHub Actions)
-1. Push this repo to GitHub.
-2. **Repo → Settings → Secrets and variables → Actions → New secret**:
-   add `ANTHROPIC_API_KEY` (and `REVID_API_KEY` when you automate submission).
-3. `.github/workflows/daily.yml` already runs every morning and commits the day's
-   script. Adjust the `cron` time to your timezone.
+### 2. Gemini API key (script generation — FREE)
+1. Go to **https://aistudio.google.com/apikey** (sign in with Google).
+2. **Create API key** — no credit card needed.
+3. `cp .env.example .env` and paste it as `GEMINI_API_KEY=...`
+
+### 3. Generate your first script
+```bash
+export $(grep -v '^#' .env | xargs)
+python src/run_pipeline.py --script
+# read outputs/1-the-note-on-the-windshield/script.txt  ← CHECKPOINT 1 (approve/edit)
+```
+
+### 4. Make the video (voice + images + render — FREE)
+```bash
+python src/run_pipeline.py --render 1
+# watch outputs/1-the-note-on-the-windshield/final.mp4  ← CHECKPOINT 2 (approve)
+```
+Edge TTS makes the narration, Pollinations makes one image per scene, FFmpeg adds a
+slow zoom + burned captions and syncs it all to the audio length.
+
+### 5. YouTube upload (FREE, one-time OAuth)
+1. **https://console.cloud.google.com** → create a project.
+2. **APIs & Services → Library →** enable **YouTube Data API v3**.
+3. **Credentials → Create credentials → OAuth client ID → Desktop app.** Download the
+   JSON, rename to **`client_secret.json`**, put it in the repo root.
+4. First publish opens a browser to authorize; the token caches in `token.json`.
+```bash
+python src/run_pipeline.py --publish 1   # uploads to YouTube + makes the 3 TikTok clips
+```
+(If you skip `client_secret.json`, it still makes the clips — you just upload the
+YouTube file by hand.)
+
+### 6. TikTok: schedule the 3 clips (FREE)
+`--publish` writes `tiktok_part1..3.mp4` + `tiktok_posting_plan.json` (times from
+`config.TIKTOK_DAYPARTS`, default 08:00 / 13:00 / 19:00, each labelled PART 1/2/3
+with a "full story on YouTube" CTA). To post them:
+- **TikTok native scheduler** (free): upload the 3 clips on tiktok.com, set each time. Up to 10 days ahead.
+- **Metricool free tier / Buffer**: connect TikTok once, drop the 3 clips with the planned times for hands-off posting.
+
+### 7. Put script-gen on a daily timer (FREE)
+1. Push to GitHub. Add repo secret **`GEMINI_API_KEY`** (Settings → Secrets → Actions).
+2. Enable the workflow in `setup/daily.yml.txt` — create `.github/workflows/daily.yml`
+   and paste its contents. It generates the next script each morning and commits it.
 
 ---
 
-### 6. Clip each YouTube video into 3 TikTok parts (morning / afternoon / evening)
-Every full video that goes to YouTube is split into 3 vertical clips and posted to
-TikTok across the day, each labelled PART 1/2/3 with a "full story on YouTube" CTA.
-```bash
-python src/clip_for_tiktok.py outputs/1-the-note-on-the-windshield/final.mp4
-```
-This writes `tiktok_part1.mp4 … part3.mp4` plus `tiktok_posting_plan.json` with the
-three post times from `config.TIKTOK_DAYPARTS` (default 08:00 / 13:00 / 19:00 — edit there).
+## Daily routine (≈15–20 min)
+1. Approve the morning's `script.txt` (edit a line if needed).
+2. `--render` it, watch `final.mp4`.
+3. `--publish` it → YouTube + 3 TikTok clips.
+4. Queue the 3 clips to TikTok for 08:00 / 13:00 / 19:00.
+5. Weekly: add 7 new rows to `content_queue.csv`.
 
-**To actually schedule the 3 posts**, pick one:
-- **TikTok native scheduler** (free): upload the 3 clips on tiktok.com, set each post
-  time. Schedules up to 10 days ahead. Most reliable, fully manual.
-- **A social scheduler** (Metricool free tier, Buffer, or self-hosted Postiz): connect
-  TikTok once, then drop the 3 clips with the planned times for hands-off posting.
-- **Revid Auto-Post**: if you generate the parts as separate Revid renders, its scheduler
-  can post them directly.
-
-## Daily routine (≈20 min once it's running)
-1. **Approve the script** the morning job generated (`script.txt`). Tweak a line if needed.
-2. `--submit` it (or let Revid Auto-Mode pull it).
-3. **Watch the finished video** Revid returns. Approve → it posts to YouTube.
-4. **Clip it** with `clip_for_tiktok.py` and queue the 3 parts to TikTok for 08:00 / 13:00 / 19:00.
-5. Weekly: drop 7 new rows into `content_queue.csv`.
-
-## Growth model (built into the queue)
-- Post episodes 1–10 as nightly TikTok/Shorts cliffhangers.
-- Compile every 5 into an 8–12 min YouTube long-form for real RPM.
-- Episodes 1 & 10 bookend a season around the "notes" motif → reason to subscribe.
+## Free-tier limits to know
+- **Gemini:** 1,500 requests/day free — plenty (you need ~1/day). Prompts may be used for training on the free tier.
+- **Pollinations / Edge TTS:** free and keyless; if a request times out the code retries.
+- **YouTube API:** ~6 uploads/day on default quota — fine for daily posting.
 
 ## Don't skip
 - **Always do the two checkpoints.** YouTube demonetizes zero-review, mass-produced AI channels.
-- **Copyright:** only use Revid's licensed stock + AI assets. Unlicensed music/footage is the #1 channel killer.
-- **Rotate any API key that ever gets exposed.**
+- **Copyright:** Pollinations images are AI-generated (safe); never add unlicensed music.
+- **Rotate any API key/token that ever gets exposed.**
 
 ## Files
 | File | Role |
 |---|---|
 | `config.py` | Brand voice + all settings |
 | `content_queue.csv` | Idea queue (10 episodes pre-loaded) |
-| `src/generate_script.py` | Claude → finished script + metadata |
-| `src/revid_client.py` | Revid.ai render API |
+| `src/generate_script.py` | Gemini → script + metadata |
+| `src/generate_voice.py` | Edge TTS → voice.mp3 |
+| `src/generate_visuals.py` | Pollinations → scene images |
+| `src/render_video.py` | FFmpeg → captioned final.mp4 |
+| `src/upload_youtube.py` | YouTube Data API upload |
 | `src/clip_for_tiktok.py` | Splits each video into 3 dayparted TikTok clips |
 | `src/run_pipeline.py` | Orchestrator with the two checkpoints |
-| `.github/workflows/daily.yml` | Daily scheduler |
+| `setup/daily.yml.txt` | GitHub Actions scheduler (move into `.github/workflows/`) |
 
 ---
 ### Enabling the daily scheduler
 The Actions workflow ships as `setup/daily.yml.txt` (the push token lacked `workflow`
-scope). To turn it on: create `.github/workflows/daily.yml` in the repo and paste that
-file's contents in — either locally, or via GitHub's "Add file" web editor.
+scope). To turn it on, create `.github/workflows/daily.yml` and paste that file's
+contents in — locally, or via GitHub's "Add file" web editor.
