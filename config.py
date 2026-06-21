@@ -45,9 +45,14 @@ SCENES_PER_VIDEO = 6           # distinct visual beats
 
 # ---------------------------------------------------------------- Voice (Edge TTS, FREE)
 # List voices with:  edge-tts --list-voices | grep en-
-TTS_VOICE = "en-US-GuyNeural"  # deep, calm male narrator. Try en-GB-RyanNeural too.
+TTS_VOICE = "en-US-ChristopherNeural"  # deep, mature narrator (less overused than Guy)
 TTS_RATE = "-8%"               # slightly slower = more dread
 TTS_PITCH = "-2Hz"
+# Candidates to audition with: python src/sample_voices.py
+VOICE_CANDIDATES = [
+    "en-US-ChristopherNeural", "en-US-EricNeural", "en-GB-RyanNeural",
+    "en-US-RogerNeural", "en-AU-WilliamNeural", "en-US-BrianNeural",
+]
 
 # ---------------------------------------------------------------- Visuals (Pollinations, FREE)
 POLLINATIONS_BASE = "https://image.pollinations.ai/prompt"
@@ -56,7 +61,8 @@ IMAGE_W, IMAGE_H = 1080, 1920  # vertical
 #   python src/sample_styles.py
 STYLES = {
     "photoreal": ("dark cinematic, moody low-key lighting, film grain, desaturated, "
-                  "amber practical light, no faces, no text, photorealistic, 4k"),
+                  "amber practical light, realistic people with natural detailed faces, "
+                  "cinematic portrait depth, photorealistic, 4k, no on-screen text"),
     "ink_sketch": ("eerie pen and ink illustration, heavy cross-hatching, vintage "
                    "engraving, storybook horror, monochrome with a single amber accent, "
                    "no faces, no text"),

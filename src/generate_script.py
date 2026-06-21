@@ -59,8 +59,12 @@ PREMISE & REQUIRED ENDING BEAT:
 
 Return ONLY a JSON object with exactly these keys:
   "narration": full voiceover script, {lo}-{hi} words, plain spoken sentences
-  "scene_prompts": array of {config.SCENES_PER_VIDEO} short visual descriptions, one per beat,
-                   each a concrete dark cinematic image with NO people's faces and NO text
+  "scene_prompts": array of {config.SCENES_PER_VIDEO} visual descriptions IN STORY ORDER, one per
+                   narration beat (beat 1 = the opening line, last = the ending). Each MUST depict
+                   the story's named character(s) as realistic people — say who they are (approx age,
+                   look, clothing), what they are doing, and the exact location/object the narration
+                   mentions at that moment, so the image matches what is being said. Keep it dark and
+                   cinematic. No on-screen text or letters in the image.
   "youtube_title": viral curiosity-gap title under 70 chars (no clickbait lies); make people NEED to click
   "youtube_description": 2-3 sentences with naturally woven search keywords (scary story, true horror,
                          creepy, nosleep) and a subscribe CTA, ending with an "original fiction" note
