@@ -20,10 +20,16 @@ CLIENT = os.path.join(HERE, "client_secret.json")
 
 def main():
     flow = InstalledAppFlow.from_client_secrets_file(CLIENT, google_auth.SCOPES)
-    creds = flow.run_local_server(port=0, access_type="offline", prompt="consent")
+    creds = flow.run_local_server(
+        port=0, access_type="offline", prompt="consent", include_granted_scopes="false")
     info = json.load(open(CLIENT))
     c = info.get("installed", info.get("web", {}))
-    print("\n=== add these as GitHub secrets + to your .env ===")
+    if not creds.refresh_token:
+        print("\n!!! Google did NOT return a refresh token (you'd already granted this app).")
+        print("Fix: open https://myaccount.google.com/permissions , remove access for")
+        print("'LightsOutTales' / 'lights-out-tales', then run this script again.\n")
+        sys.exit(1)
+    print("\n=== add these three to your .env (and later as GitHub secrets) ===")
     print("GOOGLE_CLIENT_ID=" + c["client_id"])
     print("GOOGLE_CLIENT_SECRET=" + c["client_secret"])
     print("GOOGLE_REFRESH_TOKEN=" + creds.refresh_token)
