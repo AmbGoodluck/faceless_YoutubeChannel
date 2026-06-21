@@ -44,7 +44,7 @@ def render(out_dir: str) -> str:
         vf = (f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
               f"zoompan=z='min(zoom+0.0012,1.2)':d={frames}:s={W}x{H}:fps={fps}")
         subprocess.run([
-            "ffmpeg", "-y", "-i", img,
+            "ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", img,
             "-vf", vf, "-frames:v", str(frames),
             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), clip,
         ], check=True)
@@ -55,7 +55,8 @@ def render(out_dir: str) -> str:
         for p in parts:
             f.write(f"file '{os.path.abspath(p)}'\n")
     silent = os.path.join(out_dir, "_silent.mp4")
-    subprocess.run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", concat_txt,
+    subprocess.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                    "-f", "concat", "-safe", "0", "-i", concat_txt,
                     "-c", "copy", silent], check=True)
 
     # Captions: write a styled .ass (styling baked in, so the ffmpeg filter arg is
@@ -64,14 +65,15 @@ def render(out_dir: str) -> str:
     _even_ass(narration, total, ass, W, H)
 
     final = os.path.join(out_dir, "final.mp4")
+    q = ["-hide_banner", "-loglevel", "error"]
     burn = [
-        "ffmpeg", "-y", "-i", silent, "-i", voice,
+        "ffmpeg", "-y", *q, "-i", silent, "-i", voice,
         "-vf", f"subtitles={ass}",
         "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "192k", "-shortest", final,
     ]
     plain = [
-        "ffmpeg", "-y", "-i", silent, "-i", voice,
+        "ffmpeg", "-y", *q, "-i", silent, "-i", voice,
         "-map", "0:v", "-map", "1:a", "-c:v", "copy",
         "-c:a", "aac", "-b:a", "192k", "-shortest", final,
     ]

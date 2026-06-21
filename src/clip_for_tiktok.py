@@ -44,21 +44,28 @@ def clip_video(video_path: str) -> dict:
         out_path = os.path.join(out_dir, f"tiktok_part{i+1}.mp4")
 
         # 9:16 crop/scale + burned label (top) and CTA (bottom)
-        vf = (
-            "scale=1080:1920:force_original_aspect_ratio=increase,"
-            "crop=1080:1920,"
-            f"drawtext=text='{_ffescape(label)}':fontcolor=white:fontsize=64:"
-            "x=(w-text_w)/2:y=120:box=1:boxcolor=black@0.5:boxborderw=20,"
-            f"drawtext=text='{_ffescape(config.CLIP_CTA)}':fontcolor=0xE8E4D8:fontsize=38:"
+        crop = ("scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920")
+        vf_full = (
+            crop +
+            f",drawtext=text='{_ffescape(label)}':fontcolor=white:fontsize=64:"
+            "x=(w-text_w)/2:y=120:box=1:boxcolor=black@0.5:boxborderw=20"
+            f",drawtext=text='{_ffescape(config.CLIP_CTA)}':fontcolor=0xE8E4D8:fontsize=38:"
             "x=(w-text_w)/2:y=h-160:box=1:boxcolor=black@0.4:boxborderw=14"
         )
-        cmd = [
-            "ffmpeg", "-y", "-ss", f"{start:.2f}", "-t", f"{length:.2f}",
-            "-i", video_path, "-vf", vf,
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
-            "-c:a", "aac", "-b:a", "128k", out_path,
-        ]
-        subprocess.run(cmd, check=True)
+
+        def _run(vf):
+            subprocess.run([
+                "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                "-ss", f"{start:.2f}", "-t", f"{length:.2f}",
+                "-i", video_path, "-vf", vf,
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+                "-c:a", "aac", "-b:a", "128k", out_path,
+            ], check=True)
+        try:
+            _run(vf_full)                         # with PART label + CTA (needs libfreetype)
+        except subprocess.CalledProcessError:
+            print("[clip] text overlay unavailable here; clipping without labels")
+            _run(crop)                            # cloud runner keeps the labels
         clips.append({"part": i + 1, "label": label, "file": out_path})
         print(f"[clip] {out_path}")
 
