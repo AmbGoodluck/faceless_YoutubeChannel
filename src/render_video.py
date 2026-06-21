@@ -39,10 +39,13 @@ def render(out_dir: str) -> str:
     parts = []
     for i, img in enumerate(scenes):
         clip = os.path.join(out_dir, f"_clip_{i}.mp4")
-        zoom = f"zoompan=z='min(zoom+0.0010,1.18)':d={frames}:s={W}x{H}:fps={fps}"
+        # Single image in, zoompan emits exactly `frames` frames (no -loop, which
+        # would multiply the input stream by `frames` and explode the length).
+        vf = (f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
+              f"zoompan=z='min(zoom+0.0012,1.2)':d={frames}:s={W}x{H}:fps={fps}")
         subprocess.run([
-            "ffmpeg", "-y", "-loop", "1", "-t", f"{per:.2f}", "-i", img,
-            "-vf", f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},{zoom}",
+            "ffmpeg", "-y", "-i", img,
+            "-vf", vf, "-frames:v", str(frames),
             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), clip,
         ], check=True)
         parts.append(clip)
