@@ -33,7 +33,8 @@ def _one(image_path: str, motion_prompt: str, out_path: str):
     }
     sub = requests.post(f"{config.FAL_QUEUE_BASE}/{config.FAL_MODEL}",
                         json=body, headers=_headers(), timeout=60)
-    sub.raise_for_status()
+    if not sub.ok:
+        raise RuntimeError(f"fal submit HTTP {sub.status_code}: {sub.text[:400]}")
     j = sub.json()
     status_url, response_url = j["status_url"], j["response_url"]
 
