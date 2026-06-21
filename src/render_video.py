@@ -64,12 +64,24 @@ def render(out_dir: str) -> str:
     _even_ass(narration, total, ass, W, H)
 
     final = os.path.join(out_dir, "final.mp4")
-    subprocess.run([
+    burn = [
         "ffmpeg", "-y", "-i", silent, "-i", voice,
         "-vf", f"subtitles={ass}",
         "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "192k", "-shortest", final,
-    ], check=True)
+    ]
+    plain = [
+        "ffmpeg", "-y", "-i", silent, "-i", voice,
+        "-map", "0:v", "-map", "1:a", "-c:v", "copy",
+        "-c:a", "aac", "-b:a", "192k", "-shortest", final,
+    ]
+    try:
+        subprocess.run(burn, check=True)
+    except subprocess.CalledProcessError:
+        # ffmpeg built without libass (no `subtitles` filter) — mux without burned
+        # captions so the pipeline still completes. The cloud runner has libass.
+        print("[render] caption burn unavailable here; muxing without burned captions")
+        subprocess.run(plain, check=True)
 
     # cleanup temp
     for p in parts + [silent, concat_txt]:
