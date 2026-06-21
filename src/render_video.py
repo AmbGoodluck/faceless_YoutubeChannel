@@ -58,17 +58,15 @@ def render(out_dir: str) -> str:
     subprocess.run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", concat_txt,
                     "-c", "copy", silent], check=True)
 
-    # Captions: generate an SRT from the narration timed evenly across the audio,
-    # then burn it. (Swap for Whisper word-timing later if you want perfect sync.)
-    srt = os.path.join(out_dir, "captions.srt")
-    _even_srt(narration, total, srt)
+    # Captions: write a styled .ass (styling baked in, so the ffmpeg filter arg is
+    # just the filename — no fragile force_style string to escape).
+    ass = os.path.join(out_dir, "captions.ass")
+    _even_ass(narration, total, ass, W, H)
 
     final = os.path.join(out_dir, "final.mp4")
     subprocess.run([
         "ffmpeg", "-y", "-i", silent, "-i", voice,
-        "-vf", (f"subtitles={srt}:force_style='Fontname=DejaVu Sans,Fontsize=14,"
-                "PrimaryColour=&H00D8E4E8,OutlineColour=&H00000000,BorderStyle=1,"
-                "Outline=2,Alignment=2,MarginV=120'"),
+        "-vf", f"subtitles={ass}",
         "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "192k", "-shortest", final,
     ], check=True)
@@ -81,7 +79,7 @@ def render(out_dir: str) -> str:
     return final
 
 
-def _even_srt(text: str, total: float, path: str, max_chars=42):
+def _even_ass(text: str, total: float, path: str, W: int, H: int, max_chars=38):
     # chunk narration into caption lines, distribute time by character share
     words, lines, cur = text.split(), [], ""
     for w in words:
@@ -91,14 +89,29 @@ def _even_srt(text: str, total: float, path: str, max_chars=42):
             lines.append(cur); cur = w
     if cur: lines.append(cur)
     total_chars = sum(len(l) for l in lines) or 1
-    t = 0.0
+
     def ts(s):
         h = int(s // 3600); m = int((s % 3600) // 60); sec = s % 60
-        return f"{h:02d}:{m:02d}:{sec:06.3f}".replace(".", ",")
+        return f"{h:d}:{m:02d}:{sec:05.2f}"
+
+    header = (
+        "[Script Info]\nScriptType: v4.00+\n"
+        f"PlayResX: {W}\nPlayResY: {H}\n\n"
+        "[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, BackColour, "
+        "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, "
+        "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+        "Style: Default,Arial,56,&H00D8E4E8,&H00000000,&H64000000,-1,0,0,0,"
+        "100,100,0,0,1,3,1,2,80,80,300,1\n\n"
+        "[Events]\n"
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n")
+
+    t = 0.0
     with open(path, "w") as f:
-        for i, l in enumerate(lines, 1):
+        f.write(header)
+        for l in lines:
             dur = total * (len(l) / total_chars)
-            f.write(f"{i}\n{ts(t)} --> {ts(t+dur)}\n{l}\n\n")
+            f.write(f"Dialogue: 0,{ts(t)},{ts(t+dur)},Default,,0,0,0,,{l}\n")
             t += dur
 
 
