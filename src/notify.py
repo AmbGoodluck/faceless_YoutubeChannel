@@ -6,6 +6,7 @@ so the pipeline still works without Slack.
 Create the webhook: https://api.slack.com/messaging/webhooks
   -> Create app -> Incoming Webhooks -> add to a channel -> copy the URL.
 """
+from __future__ import annotations
 import os, json, requests
 
 

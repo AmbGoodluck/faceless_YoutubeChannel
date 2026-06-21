@@ -2,6 +2,7 @@
 Upload / download files to Google Drive using the headless cloud credentials.
 Used to store the rendered video + clips so you can watch and download them.
 """
+from __future__ import annotations
 import os, sys, io
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
