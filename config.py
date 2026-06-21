@@ -74,6 +74,19 @@ STYLES = {
 ACTIVE_STYLE = "photoreal"          # <-- change to switch the whole channel's look
 VISUAL_STYLE = STYLES[ACTIVE_STYLE]
 
+# ---------------------------------------------------------------- AI video (fal.ai, PAID)
+# "ai"     = animate each scene image into a real video clip (image-to-video, costs money)
+# "stills" = free Ken-Burns zoom on the images (no cost)
+VIDEO_MODE = "ai"
+FAL_QUEUE_BASE = "https://queue.fal.run"
+# Pick/confirm a model + its input fields at https://fal.ai/explore/image-to-video-apis
+# Cheaper: fal-ai/ltx-video  | balanced: fal-ai/kling-video/v1/standard/image-to-video
+# top end: fal-ai/veo2/image-to-video
+FAL_MODEL = "fal-ai/kling-video/v1/standard/image-to-video"
+AI_CLIP_SECONDS = 5
+AI_MOTION = ("subtle cinematic camera motion, slow push-in, eerie horror atmosphere, "
+             "realistic, keep the character consistent, no warping, no morphing, no text")
+
 # ---------------------------------------------------------------- TikTok clipping
 TIKTOK_CLIPS_PER_VIDEO = 3
 TIKTOK_DAYPARTS = ["07:00", "12:00", "16:00"]   # 7am / 12pm / 4pm (local)

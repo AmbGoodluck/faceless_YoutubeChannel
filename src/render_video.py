@@ -29,25 +29,38 @@ def render(out_dir: str) -> str:
     if not scenes:
         raise RuntimeError("No scene images. Run generate_visuals first.")
 
-    total = _audio_dur(voice)
-    per = total / len(scenes)
     W, H = config.IMAGE_W, config.IMAGE_H
     fps = 30
+    # AI mode uses the animated scene_*.mp4 clips; stills mode uses the .jpg images.
+    ai_clips = sorted(os.path.join(out_dir, f) for f in os.listdir(out_dir)
+                      if f.startswith("scene_") and f.endswith(".mp4"))
+    use_ai = config.VIDEO_MODE == "ai" and ai_clips
+    sources = ai_clips if use_ai else scenes
+    total = _audio_dur(voice)
+    per = total / len(sources)
     frames = int(per * fps)
 
-    # Build one zooming clip per image, then concat.
     parts = []
-    for i, img in enumerate(scenes):
+    for i, src in enumerate(sources):
         clip = os.path.join(out_dir, f"_clip_{i}.mp4")
-        # Single image in, zoompan emits exactly `frames` frames (no -loop, which
-        # would multiply the input stream by `frames` and explode the length).
-        vf = (f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
-              f"zoompan=z='min(zoom+0.0012,1.2)':d={frames}:s={W}x{H}:fps={fps}")
-        subprocess.run([
-            "ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", img,
-            "-vf", vf, "-frames:v", str(frames),
-            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), clip,
-        ], check=True)
+        if use_ai:
+            # fit each AI clip to its slot: pad short ones by holding the last frame, trim long ones.
+            vf = (f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
+                  f"tpad=stop_mode=clone:stop_duration={per:.2f}")
+            subprocess.run([
+                "ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", src,
+                "-vf", vf, "-t", f"{per:.2f}", "-an",
+                "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), clip,
+            ], check=True)
+        else:
+            # Ken-Burns zoom on a single still.
+            vf = (f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
+                  f"zoompan=z='min(zoom+0.0012,1.2)':d={frames}:s={W}x{H}:fps={fps}")
+            subprocess.run([
+                "ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", src,
+                "-vf", vf, "-frames:v", str(frames),
+                "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), clip,
+            ], check=True)
         parts.append(clip)
 
     concat_txt = os.path.join(out_dir, "_concat.txt")

@@ -39,6 +39,7 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+          FAL_KEY: ${{ secrets.FAL_KEY }}
         run: |
           python cloud/run_stage.py "${{ github.event.inputs.stage || 'script' }}" \
             --episode "${{ github.event.inputs.episode }}"

@@ -57,6 +57,9 @@ def cmd_render(rows, rid):
     narration = generate_script.load_narration(out)   # uses your edited narration.txt
     generate_voice.make_voice(narration, out)
     generate_visuals.make_visuals(script["scene_prompts"], out)
+    if config.VIDEO_MODE == "ai":
+        from src import generate_ai_video
+        generate_ai_video.animate(script["scene_prompts"], out)
     final = render_video.render(out)
     set_status(rows, rid, "rendered")
     notify.video_ready(rid, final)
