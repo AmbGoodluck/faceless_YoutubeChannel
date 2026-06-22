@@ -37,40 +37,61 @@ def render(out_dir: str) -> str:
     use_ai = config.VIDEO_MODE != "stills" and ai_clips   # ai (fal) or runpod produce scene_*.mp4
     sources = ai_clips if use_ai else scenes
     total = _audio_dur(voice)
-    per = total / len(sources)
-    frames = int(per * fps)
+    n = len(sources)
+    X = config.CROSSFADE if n > 1 else 0.0          # crossfade seconds between scenes
+    per = (total + (n - 1) * X) / n                  # longer per-clip so crossfades still sum to `total`
+    frames = max(2, int(per * fps))
 
     parts = []
     for i, src in enumerate(sources):
         clip = os.path.join(out_dir, f"_clip_{i}.mp4")
         if use_ai:
-            # fit each AI clip to its slot: pad short ones by holding the last frame, trim long ones.
             vf = (f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
                   f"tpad=stop_mode=clone:stop_duration={per:.2f}")
-            subprocess.run([
-                "ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", src,
-                "-vf", vf, "-t", f"{per:.2f}", "-an",
-                "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), clip,
-            ], check=True)
+            subprocess.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", src,
+                            "-vf", vf, "-t", f"{per:.2f}", "-an",
+                            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), clip], check=True)
         else:
-            # Ken-Burns zoom on a single still.
             vf = (f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
                   f"zoompan=z='min(zoom+0.0012,1.2)':d={frames}:s={W}x{H}:fps={fps}")
-            subprocess.run([
-                "ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", src,
-                "-vf", vf, "-frames:v", str(frames),
-                "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), clip,
-            ], check=True)
+            subprocess.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", src,
+                            "-vf", vf, "-frames:v", str(frames),
+                            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), clip], check=True)
         parts.append(clip)
 
-    concat_txt = os.path.join(out_dir, "_concat.txt")
-    with open(concat_txt, "w") as f:
-        for p in parts:
-            f.write(f"file '{os.path.abspath(p)}'\n")
     silent = os.path.join(out_dir, "_silent.mp4")
-    subprocess.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
-                    "-f", "concat", "-safe", "0", "-i", concat_txt,
-                    "-c", "copy", silent], check=True)
+    grade = config.FILM_GRADE   # grain + vignette for a cinematic feel
+    try:
+        if n > 1 and X > 0:
+            # chain xfade crossfades across all clips, then apply the film grade
+            inputs = []
+            for p in parts:
+                inputs += ["-i", p]
+            fc, prev = [], "0:v"
+            for k in range(1, n):
+                off = k * (per - X)
+                lbl = f"v{k}"
+                fc.append(f"[{prev}][{k}:v]xfade=transition=fade:duration={X:.2f}:offset={off:.2f}[{lbl}]")
+                prev = lbl
+            fc.append(f"[{prev}]{grade}[vout]")
+            subprocess.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", *inputs,
+                            "-filter_complex", ";".join(fc), "-map", "[vout]",
+                            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), silent], check=True)
+        else:
+            raise RuntimeError("single clip — skip xfade")
+    except (subprocess.CalledProcessError, RuntimeError):
+        # fallback: hard-cut concat, then re-encode with the film grade
+        concat_txt = os.path.join(out_dir, "_concat.txt")
+        with open(concat_txt, "w") as f:
+            for p in parts:
+                f.write(f"file '{os.path.abspath(p)}'\n")
+        tmp = os.path.join(out_dir, "_cat.mp4")
+        subprocess.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                        "-f", "concat", "-safe", "0", "-i", concat_txt, "-c", "copy", tmp], check=True)
+        subprocess.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", tmp,
+                        "-vf", grade, "-c:v", "libx264", "-pix_fmt", "yuv420p", silent], check=True)
+        try: os.remove(tmp)
+        except OSError: pass
 
     # Captions: write a styled .ass (styling baked in, so the ffmpeg filter arg is
     # just the filename — no fragile force_style string to escape).

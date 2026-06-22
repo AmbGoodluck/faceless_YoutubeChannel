@@ -96,6 +96,11 @@ RUNPOD_MODE = "comfyui"              # "comfyui" (worker-comfyui + workflow) or 
 RUNPOD_WORKFLOW = "comfyui_workflows/ltx_i2v.json"   # export from ComfyUI: Save (API Format)
 RUNPOD_NODE_PROMPT = "positive"      # title hint for the positive CLIPTextEncode node
 RUNPOD_FRAMES = 97                   # LTX ~24fps; 97 frames ≈ 4s
+
+# ---- Cinematic render look (free, core ffmpeg filters) ----
+CROSSFADE = 0.5                       # seconds of crossfade dissolve between scenes
+# subtle contrast + slight desaturation + vignette + fine film grain:
+FILM_GRADE = "eq=contrast=1.06:saturation=0.92,vignette=PI/5,noise=alls=8:allf=t"
 FAL_QUEUE_BASE = "https://queue.fal.run"
 # Pick/confirm a model + its input fields at https://fal.ai/explore/image-to-video-apis
 # Cheaper: fal-ai/ltx-video  | balanced: fal-ai/kling-video/v1/standard/image-to-video
