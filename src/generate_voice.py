@@ -6,7 +6,7 @@ then all lines are stitched into one voice.mp3.
 Reads the editable screenplay in <out_dir>/narration.txt (SPEAKER: line per row).
 """
 from __future__ import annotations
-import os, sys, asyncio, subprocess
+import os, sys, re, asyncio, subprocess
 import edge_tts
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -23,11 +23,12 @@ def make_voice(out_dir: str, voice_map: dict | None = None) -> str:
     lines = generate_script.parse_screenplay(out_dir)
     parts = []
     for i, (speaker, text) in enumerate(lines):
-        if not text.strip():
+        spoken = re.sub(r"\([^)]*\)", " ", text).strip()   # drop (stage directions)
+        if not spoken:
             continue
         voice = config.TTS_VOICE if speaker.upper() == "NARRATOR" else vm.get(speaker.upper(), config.TTS_VOICE)
         p = os.path.join(out_dir, f"_line_{i:03d}.mp3")
-        asyncio.run(_synth(text, voice, p))
+        asyncio.run(_synth(spoken, voice, p))
         parts.append(p)
 
     concat = os.path.join(out_dir, "_voice_concat.txt")
