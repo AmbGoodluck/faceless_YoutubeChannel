@@ -107,10 +107,59 @@ def load_narration(out_dir: str) -> str:
         return json.load(f)["narration"]
 
 
+def generate_episode(spec: dict) -> dict:
+    """Generate one 6-8 min serialized episode from a story spec (see src/story.py)."""
+    lo, hi = config.EPISODE_WORDS
+    chars = ", ".join(f"{c.get('name')} ({c.get('role')})" for c in spec.get("characters", []))
+    recap = spec.get("recap") or "(this is the first episode — no recap yet)"
+    finale = ("This is the FINALE — bring the story to a satisfying, eerie resolution."
+              if spec.get("is_finale") else "End on a strong cliffhanger for the next episode.")
+    user_prompt = f"""Write Episode {spec['episode']} of {spec['total']} of the horror series "{spec['story_title']}".
+Logline: {spec.get('logline','')}
+Setting: {spec.get('setting','')}
+Characters: {chars}
+Story so far (recap of previous episodes): {recap}
+WHAT THIS EPISODE COVERS: {spec['beat']}
+{finale}
+
+Return ONLY a JSON object with these keys:
+  "narration": the full episode voiceover, {lo}-{hi} words, third person past tense, grounded teen
+               horror, NO gore. If episode > 1, open with a 1-2 sentence "Previously..." recap, then
+               tell this episode and end on the beat above.
+  "scene_prompts": array of {config.SCENES_PER_VIDEO} visual descriptions IN STORY ORDER (one per beat
+               of the narration, start to finish). Each shows the named character(s) as realistic
+               people doing the action at that moment, dark cinematic, no on-screen text.
+  "youtube_title": "{spec['story_title']} — Ep {spec['episode']}: <hooky subtitle>" under 70 chars
+  "youtube_description": 2-3 sentences with search keywords + a subscribe CTA, ending with an
+               "original fiction" note
+  "hashtags": array of 10-12 tags (no # symbol) mixing broad horror tags, niche tags, and the series name
+  "tiktok_caption": under 150 chars, teases THIS episode, ends on a curiosity hook
+  "thumbnail_text": 2-4 punchy uppercase words for the thumbnail
+  "pinned_comment": one engagement-bait question about this episode
+  "recap_for_next": 1-2 sentences summarizing what happened this episode (fed into the next one)"""
+
+    raw = _call_gemini(config.BRAND_SYSTEM_PROMPT, user_prompt)
+    data = json.loads(_extract_json(raw))
+
+    sid, ep = spec["story_id"], spec["episode"]
+    data["id"] = f"{sid}.{ep}"
+    data["title"] = data.get("youtube_title", f"{spec['story_title']} Ep {ep}")
+    slug = f"s{sid}e{ep:02d}-{slugify(spec['story_title'])}"
+    data["slug"] = slug
+
+    out_dir = os.path.join(config.OUTPUT_DIR, slug)
+    os.makedirs(out_dir, exist_ok=True)
+    with open(os.path.join(out_dir, "script.json"), "w") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+    with open(os.path.join(out_dir, "narration.txt"), "w") as f:
+        f.write(data["narration"])
+    with open(os.path.join(out_dir, "script.txt"), "w") as f:
+        f.write(f"{data['title']}\n\n{data['narration']}\n\n--- SCENES ---\n")
+        f.write("\n".join(f"{i+1}. {s}" for i, s in enumerate(data.get("scene_prompts", []))))
+    print(f"[script] {slug} ({len(data['narration'].split())} words)")
+    return data
+
+
 if __name__ == "__main__":
-    generate({
-        "id": "1", "title": "The Note on the Windshield",
-        "hook_opening": "The note under Maya's wiper said 'you forgot to lock the back door.' She lived on the fourth floor.",
-        "premise": "A woman finds a handwritten note that's correct about something no one should know. Ends: a second note is already waiting inside her apartment.",
-        "notes": "",
-    })
+    from src import story
+    generate_episode(story.next_episode_spec())

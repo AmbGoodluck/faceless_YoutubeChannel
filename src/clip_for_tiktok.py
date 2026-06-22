@@ -33,13 +33,17 @@ def _ffescape(text: str) -> str:
 def clip_video(video_path: str) -> dict:
     n = config.TIKTOK_CLIPS_PER_VIDEO
     total = _duration(video_path)
-    part = total / n
     out_dir = os.path.dirname(video_path)
     clips = []
+    # Short promo teasers sampled from the long episode: opening hook, mid build,
+    # and the cliffhanger near the end. Each ~CLIP_SECONDS long.
+    L = min(config.CLIP_SECONDS, max(5.0, total / n))
+    positions = [0.02, 0.45, 1.0]                 # start, middle, end
 
     for i in range(n):
-        start = max(0.0, i * part - (config.CLIP_OVERLAP_SEC if i else 0))
-        length = part + (config.CLIP_OVERLAP_SEC if i else 0)
+        frac = positions[i] if i < len(positions) else (i / max(1, n - 1))
+        start = min(max(0.0, frac * total - (L if frac >= 1.0 else 0)), max(0.0, total - L))
+        length = L
         label = config.CLIP_LABELS[i] if i < len(config.CLIP_LABELS) else f"PART {i+1}"
         out_path = os.path.join(out_dir, f"tiktok_part{i+1}.mp4")
 

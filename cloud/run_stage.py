@@ -63,14 +63,12 @@ def _captions(script):
 
 # ---------------------------------------------------------------- stages
 def stage_script():
-    rows = _rows()
-    row = next((r for r in rows if r["status"] == "queued"), None)
-    if not row:
-        print("Queue empty."); return
-    data = generate_script.generate(row)
-    slug = f"{row['id']}-{generate_script.slugify(row['title'])}"
-    _set_status(rows, row["id"], "script_ready")
-    _save_state(slug, {"slug": slug, "id": row["id"]})
+    from src import story
+    spec = story.next_episode_spec()
+    data = generate_script.generate_episode(spec)
+    slug = data["slug"]
+    story.save_recap(data.get("recap_for_next", ""))
+    _save_state(slug, {"slug": slug, "id": data["id"]})
     slack_blocks.script_for_approval(slug, data)
     print(f"::notice::script ready {slug}")
 

@@ -40,8 +40,11 @@ GEMINI_ENDPOINT = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
     f"{GEMINI_MODEL}:generateContent"
 )
-SHORTFORM_WORDS = (130, 170)   # ~30-60s of narration
-SCENES_PER_VIDEO = 6           # distinct visual beats
+# Serialized story arcs: one 6-8 min episode per day, 10 episodes per story,
+# then a brand-new story starts the next day.
+EPISODES_PER_STORY = 10
+EPISODE_WORDS = (900, 1200)    # ~6-8 min of narration
+SCENES_PER_VIDEO = 24          # distinct visual beats across the episode
 
 # ---------------------------------------------------------------- Voice (Edge TTS, FREE)
 # List voices with:  edge-tts --list-voices | grep en-
@@ -75,9 +78,9 @@ ACTIVE_STYLE = "photoreal"          # <-- change to switch the whole channel's l
 VISUAL_STYLE = STYLES[ACTIVE_STYLE]
 
 # ---------------------------------------------------------------- AI video (fal.ai, PAID)
-# "ai"     = animate each scene image into a real video clip (image-to-video, costs money)
-# "stills" = free Ken-Burns zoom on the images (no cost)
-VIDEO_MODE = "ai"
+# "stills" = free Ken-Burns zoom on the images (no cost) — current default
+# "ai"     = animate each scene image into a real video clip (image-to-video, PAID via fal)
+VIDEO_MODE = "stills"
 FAL_QUEUE_BASE = "https://queue.fal.run"
 # Pick/confirm a model + its input fields at https://fal.ai/explore/image-to-video-apis
 # Cheaper: fal-ai/ltx-video  | balanced: fal-ai/kling-video/v1/standard/image-to-video
@@ -89,9 +92,10 @@ AI_MOTION = ("subtle cinematic camera motion, slow push-in, eerie horror atmosph
 
 # ---------------------------------------------------------------- TikTok clipping
 TIKTOK_CLIPS_PER_VIDEO = 3
+CLIP_SECONDS = 50            # length of each promo teaser clip cut from the long episode
 TIKTOK_DAYPARTS = ["07:00", "12:00", "16:00"]   # 7am / 12pm / 4pm (local)
 CLIP_RATIO = "9:16"
-CLIP_CTA = "Full story on YouTube — @thelightsouttales"
+CLIP_CTA = "Full episode on YouTube — @thelightsouttales"
 CLIP_LABELS = ["PART 1", "PART 2", "PART 3"]
 CLIP_OVERLAP_SEC = 1.0
 

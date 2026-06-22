@@ -35,18 +35,20 @@ def set_status(rows, rid, status):
     write_queue(rows)
 
 def _dir_for(rid):
+    exact = os.path.join(config.OUTPUT_DIR, rid)
+    if os.path.isdir(exact):
+        return exact
     hits = glob.glob(os.path.join(config.OUTPUT_DIR, f"{rid}-*"))
     return hits[0] if hits else None
 
 
 def cmd_script(rows):
-    row = next((r for r in rows if r["status"] == "queued"), None)
-    if not row:
-        print("Queue empty — add rows to content_queue.csv."); return
-    data = generate_script.generate(row)
-    set_status(rows, row["id"], "script_ready")
-    notify.script_ready(row["id"], data)
-    print(f"\n>>> CHECKPOINT 1: read outputs/{row['id']}-*/script.txt, then --render {row['id']}")
+    from src import story
+    spec = story.next_episode_spec()
+    data = generate_script.generate_episode(spec)
+    story.save_recap(data.get("recap_for_next", ""))
+    notify.script_ready(data["id"], data)
+    print(f"\n>>> CHECKPOINT 1: read outputs/{data['slug']}/script.txt, then --render {data['slug']}")
 
 
 def cmd_render(rows, rid):
