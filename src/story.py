@@ -49,20 +49,21 @@ def _gen_bible() -> dict:
 
 
 def next_episode_spec() -> dict:
-    """Return the spec for the episode to make now, advancing state."""
+    """Return the spec for the NEXT episode. Does NOT advance the counter — call
+    commit() only after the episode is successfully generated, so failed runs don't
+    skip episodes. The story bible IS persisted immediately (so retries reuse it)."""
     st = _load()
     if not st or st.get("episode", 0) >= config.EPISODES_PER_STORY:
         story_id = (st.get("story_id", 0) + 1) if st else 1
         bible = _gen_bible()
         st = {"story_id": story_id, "episode": 0, "bible": bible, "last_recap": ""}
+        _save(st)
         print(f"[story] new story #{story_id}: {bible.get('story_title')}")
 
-    st["episode"] += 1
-    n = st["episode"]
+    n = st["episode"] + 1                  # the episode we're about to make
     bible = st["bible"]
     beats = bible.get("episodes", [])
     beat = beats[n - 1]["beat"] if n - 1 < len(beats) else "continue the story"
-    _save(st)
 
     return {
         "story_id": st["story_id"], "episode": n, "total": config.EPISODES_PER_STORY,
@@ -75,11 +76,18 @@ def next_episode_spec() -> dict:
     }
 
 
-def save_recap(recap: str):
+def commit(recap: str):
+    """Mark the current episode as done (advance the counter) + store its recap."""
     st = _load()
     if st:
+        st["episode"] += 1
         st["last_recap"] = recap or ""
         _save(st)
+
+
+# backwards-compatible alias
+def save_recap(recap: str):
+    commit(recap)
 
 
 if __name__ == "__main__":
