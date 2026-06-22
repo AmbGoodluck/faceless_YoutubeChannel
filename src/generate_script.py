@@ -4,7 +4,7 @@ Get a key at https://aistudio.google.com/apikey and put it in .env as GEMINI_API
 
 Output: outputs/<id>-<slug>/script.json  (+ script.txt for the approval checkpoint)
 """
-import os, sys, json, re, requests
+import os, sys, json, re, time, requests
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
@@ -27,11 +27,19 @@ def _call_gemini(system: str, user: str) -> str:
             "thinkingConfig": {"thinkingBudget": 0},
         },
     }
-    r = requests.post(
-        config.GEMINI_ENDPOINT,
-        params={"key": os.environ["GEMINI_API_KEY"]},
-        json=body, timeout=120,
-    )
+    r = None
+    for attempt in range(5):
+        r = requests.post(
+            config.GEMINI_ENDPOINT,
+            params={"key": os.environ["GEMINI_API_KEY"]},
+            json=body, timeout=120,
+        )
+        if r.status_code in (429, 500, 502, 503, 504):   # transient — back off and retry
+            wait = 5 * (attempt + 1)
+            print(f"[gemini] {r.status_code}, retrying in {wait}s...")
+            time.sleep(wait)
+            continue
+        break
     r.raise_for_status()
     cand = r.json()["candidates"][0]
     if cand.get("finishReason") == "MAX_TOKENS":
