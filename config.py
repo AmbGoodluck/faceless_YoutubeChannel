@@ -84,9 +84,18 @@ ACTIVE_STYLE = "photoreal"          # <-- change to switch the whole channel's l
 VISUAL_STYLE = STYLES[ACTIVE_STYLE]
 
 # ---------------------------------------------------------------- AI video (fal.ai, PAID)
-# "stills" = free Ken-Burns zoom on the images (no cost) — current default
-# "ai"     = animate each scene image into a real video clip (image-to-video, PAID via fal)
+# "stills"  = free Ken-Burns zoom on the images (no cost) — current default
+# "runpod"  = open-source LTX/Wan image-to-video on your RunPod serverless GPU (cheap, ~$1/episode)
+# "ai"      = fal.ai image-to-video (managed, PAID per clip)
 VIDEO_MODE = "stills"
+
+# ---- RunPod serverless (open-source video on a rented GPU) — see cloud/RUNPOD_SETUP.md
+RUNPOD_BASE = "https://api.runpod.ai/v2"
+RUNPOD_ENDPOINT_ID = ""              # your serverless endpoint id (set after deploying)
+RUNPOD_MODE = "comfyui"              # "comfyui" (worker-comfyui + workflow) or "simple" (ready endpoint)
+RUNPOD_WORKFLOW = "comfyui_workflows/ltx_i2v.json"   # export from ComfyUI: Save (API Format)
+RUNPOD_NODE_PROMPT = "positive"      # title hint for the positive CLIPTextEncode node
+RUNPOD_FRAMES = 97                   # LTX ~24fps; 97 frames ≈ 4s
 FAL_QUEUE_BASE = "https://queue.fal.run"
 # Pick/confirm a model + its input fields at https://fal.ai/explore/image-to-video-apis
 # Cheaper: fal-ai/ltx-video  | balanced: fal-ai/kling-video/v1/standard/image-to-video

@@ -61,6 +61,9 @@ def cmd_render(rows, rid):
     if config.VIDEO_MODE == "ai":
         from src import generate_ai_video
         generate_ai_video.animate(script["scene_prompts"], out)
+    elif config.VIDEO_MODE == "runpod":
+        from src import generate_runpod_video
+        generate_runpod_video.animate(script["scene_prompts"], out)
     final = render_video.render(out)
     set_status(rows, rid, "rendered")
     notify.video_ready(rid, final)

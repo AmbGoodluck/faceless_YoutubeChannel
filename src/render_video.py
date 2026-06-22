@@ -34,7 +34,7 @@ def render(out_dir: str) -> str:
     # AI mode uses the animated scene_*.mp4 clips; stills mode uses the .jpg images.
     ai_clips = sorted(os.path.join(out_dir, f) for f in os.listdir(out_dir)
                       if f.startswith("scene_") and f.endswith(".mp4"))
-    use_ai = config.VIDEO_MODE == "ai" and ai_clips
+    use_ai = config.VIDEO_MODE != "stills" and ai_clips   # ai (fal) or runpod produce scene_*.mp4
     sources = ai_clips if use_ai else scenes
     total = _audio_dur(voice)
     per = total / len(sources)
