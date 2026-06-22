@@ -43,9 +43,7 @@ def _gen_bible() -> dict:
   "episodes": [ {n} objects: {{"n": 1.., "beat": "what happens this episode, advancing the arc;
                 episode {n} must resolve the story"}} ]
 }}"""
-    raw = generate_script._call_gemini(BIBLE_SYSTEM, prompt)
-    bible = json.loads(generate_script._extract_json(raw))
-    return bible
+    return generate_script.gen_json(BIBLE_SYSTEM, prompt)
 
 
 def next_episode_spec() -> dict:

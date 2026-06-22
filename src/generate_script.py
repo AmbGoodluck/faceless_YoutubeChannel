@@ -20,7 +20,7 @@ def _call_gemini(system: str, user: str) -> str:
         "contents": [{"role": "user", "parts": [{"text": user}]}],
         "generationConfig": {
             "temperature": 1.0,
-            "maxOutputTokens": 8192,
+            "maxOutputTokens": 16384,
             "responseMimeType": "application/json",
             # 2.5 models burn output budget on hidden "thinking" tokens, which
             # truncates the JSON. Turn it off so the full script comes back.
@@ -52,6 +52,21 @@ def _extract_json(raw: str) -> str:
     raw = re.sub(r"^```(json)?|```$", "", raw.strip(), flags=re.MULTILINE).strip()
     start, end = raw.find("{"), raw.rfind("}")
     return raw[start:end + 1] if start != -1 and end != -1 else raw
+
+
+def gen_json(system: str, user: str, attempts: int = 8) -> dict:
+    """Call Gemini and parse JSON, retrying every 5s until it succeeds (LLMs sometimes
+    emit a malformed character in long outputs). Raises only after `attempts` tries."""
+    import requests as _rq
+    last = None
+    for i in range(attempts):
+        try:
+            return json.loads(_extract_json(_call_gemini(system, user)))
+        except (json.JSONDecodeError, KeyError, RuntimeError, _rq.RequestException) as e:
+            last = e
+            print(f"[gemini] response not usable (try {i+1}/{attempts}): {e}; retrying in 5s")
+            time.sleep(5)
+    raise RuntimeError(f"Gemini failed to return valid JSON after {attempts} tries: {last}")
 
 
 def generate(row: dict) -> dict:
@@ -146,8 +161,7 @@ Return ONLY a JSON object with these keys:
   "pinned_comment": one engagement-bait question about this episode
   "recap_for_next": 1-2 sentences summarizing what happened this episode (fed into the next one)"""
 
-    raw = _call_gemini(config.BRAND_SYSTEM_PROMPT, user_prompt)
-    data = json.loads(_extract_json(raw))
+    data = gen_json(config.BRAND_SYSTEM_PROMPT, user_prompt)
 
     sid, ep = spec["story_id"], spec["episode"]
     data["id"] = f"{sid}.{ep}"
