@@ -124,8 +124,7 @@ def load_narration(out_dir: str) -> str:
     """Prefer the editable narration.txt so the user's edits take effect."""
     txt = os.path.join(out_dir, "narration.txt")
     if os.path.exists(txt):
-        with open(txt) as f:
-            return f.read().strip()
+        return " ".join(text for _, text in parse_screenplay(out_dir))   # spoken words only
     with open(os.path.join(out_dir, "script.json")) as f:
         return json.load(f)["narration"]
 
@@ -145,13 +144,17 @@ Story so far (recap of previous episodes): {recap}
 WHAT THIS EPISODE COVERS: {spec['beat']}
 {finale}
 
+This is a SHORT FILM screenplay — the characters SPEAK their own lines and act. Use a
+"Narrator" sparingly, only for brief scene-setting/action between dialogue.
+
 Return ONLY a JSON object with these keys:
-  "narration": the full episode voiceover, {lo}-{hi} words, third person past tense, grounded teen
-               horror, NO gore. If episode > 1, open with a 1-2 sentence "Previously..." recap, then
-               tell this episode and end on the beat above.
-  "scene_prompts": array of {config.SCENES_PER_VIDEO} visual descriptions IN STORY ORDER (one per beat
-               of the narration, start to finish). Each shows the named character(s) as realistic
-               people doing the action at that moment, dark cinematic, no on-screen text.
+  "lines": array of screenplay lines IN ORDER ({lo}-{hi} words of dialogue+narration total),
+           each {{"speaker": "<a character name, or Narrator>", "text": "the spoken line"}}.
+           Mostly character dialogue that advances the scene; grounded teen horror, NO gore.
+           If episode > 1, the first line can be a short Narrator "Previously..." recap. End on the beat.
+  "scene_prompts": array of {config.SCENES_PER_VIDEO} visual descriptions IN STORY ORDER (start to
+           finish), each showing the named character(s) as realistic people doing the action at
+           that moment, dark cinematic, no on-screen text.
   "youtube_title": "{spec['story_title']} — Ep {spec['episode']}: <hooky subtitle>" under 70 chars
   "youtube_description": 2-3 sentences with search keywords + a subscribe CTA, ending with an
                "original fiction" note
@@ -163,6 +166,10 @@ Return ONLY a JSON object with these keys:
 
     data = gen_json(config.BRAND_SYSTEM_PROMPT, user_prompt)
 
+    lines = data.get("lines", [])
+    data["narration"] = " ".join(l.get("text", "") for l in lines)   # plain text (captions/preview)
+    data["voice_map"] = spec.get("voice_map", {})
+
     sid, ep = spec["story_id"], spec["episode"]
     data["id"] = f"{sid}.{ep}"
     data["title"] = data.get("youtube_title", f"{spec['story_title']} Ep {ep}")
@@ -173,13 +180,30 @@ Return ONLY a JSON object with these keys:
     os.makedirs(out_dir, exist_ok=True)
     with open(os.path.join(out_dir, "script.json"), "w") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+    # narration.txt = editable screenplay (one "SPEAKER: line" per row). Voice + captions read this.
     with open(os.path.join(out_dir, "narration.txt"), "w") as f:
-        f.write(data["narration"])
+        f.write("\n".join(f"{l.get('speaker','Narrator').upper()}: {l.get('text','')}" for l in lines))
     with open(os.path.join(out_dir, "script.txt"), "w") as f:
-        f.write(f"{data['title']}\n\n{data['narration']}\n\n--- SCENES ---\n")
+        f.write(f"{data['title']}\n\n")
+        f.write("\n".join(f"{l.get('speaker','Narrator').upper()}: {l.get('text','')}" for l in lines))
+        f.write("\n\n--- SCENES ---\n")
         f.write("\n".join(f"{i+1}. {s}" for i, s in enumerate(data.get("scene_prompts", []))))
-    print(f"[script] {slug} ({len(data['narration'].split())} words)")
+    print(f"[script] {slug} ({len(data['narration'].split())} words, {len(lines)} lines)")
     return data
+
+
+def parse_screenplay(out_dir: str):
+    """Read narration.txt into [(speaker, text)] pairs. A row without 'SPEAKER:' is Narrator."""
+    path = os.path.join(out_dir, "narration.txt")
+    out = []
+    with open(path) as f:
+        for row in f.read().splitlines():
+            row = row.strip()
+            if not row:
+                continue
+            m = re.match(r"^([A-Z][A-Z0-9 ._'-]{0,28}):\s+(.*)$", row)
+            out.append((m.group(1).strip(), m.group(2).strip()) if m else ("NARRATOR", row))
+    return out
 
 
 if __name__ == "__main__":

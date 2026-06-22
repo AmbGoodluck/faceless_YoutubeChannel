@@ -56,6 +56,12 @@ VOICE_CANDIDATES = [
     "en-US-ChristopherNeural", "en-US-EricNeural", "en-GB-RyanNeural",
     "en-US-RogerNeural", "en-AU-WilliamNeural", "en-US-BrianNeural",
 ]
+# Screenplay mode: each character is auto-assigned a distinct voice from these pools
+# (kept consistent across episodes via the story bible). Narrator uses TTS_VOICE.
+MALE_VOICES = ["en-US-EricNeural", "en-GB-RyanNeural", "en-US-BrianNeural",
+               "en-AU-WilliamNeural", "en-US-DavisNeural", "en-US-RogerNeural"]
+FEMALE_VOICES = ["en-US-AriaNeural", "en-US-JennyNeural", "en-GB-SoniaNeural",
+                 "en-AU-NatashaNeural", "en-US-MichelleNeural", "en-US-AnaNeural"]
 
 # ---------------------------------------------------------------- Visuals (Pollinations, FREE)
 POLLINATIONS_BASE = "https://image.pollinations.ai/prompt"

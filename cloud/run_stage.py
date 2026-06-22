@@ -76,8 +76,7 @@ def stage_script():
 def stage_render(slug):
     out = _dir(slug)
     script = json.load(open(os.path.join(out, "script.json")))
-    narration = generate_script.load_narration(out)
-    generate_voice.make_voice(narration, out)
+    generate_voice.make_voice(out, script.get("voice_map", {}))   # multi-voice screenplay
     generate_visuals.make_visuals(script["scene_prompts"], out)
     if config.VIDEO_MODE == "ai":
         from src import generate_ai_video

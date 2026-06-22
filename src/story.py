@@ -39,11 +39,20 @@ def _gen_bible() -> dict:
   "story_title": "short, hooky series title",
   "logline": "one sentence describing the whole story",
   "setting": "where/when it takes place",
-  "characters": [ {{"name": "...", "role": "..."}} (2-4 main characters) ],
+  "characters": [ {{"name": "...", "role": "...", "gender": "male|female"}} (2-4 main characters) ],
   "episodes": [ {n} objects: {{"n": 1.., "beat": "what happens this episode, advancing the arc;
                 episode {n} must resolve the story"}} ]
 }}"""
-    return generate_script.gen_json(BIBLE_SYSTEM, prompt)
+    bible = generate_script.gen_json(BIBLE_SYSTEM, prompt)
+    # assign a distinct, consistent voice to each character (Narrator uses TTS_VOICE)
+    male = list(config.MALE_VOICES)
+    female = list(config.FEMALE_VOICES)
+    vm = {}
+    for c in bible.get("characters", []):
+        pool = female if str(c.get("gender", "")).lower().startswith("f") else male
+        vm[c["name"].upper()] = pool.pop(0) if pool else config.TTS_VOICE
+    bible["voice_map"] = vm
+    return bible
 
 
 def next_episode_spec() -> dict:
@@ -69,6 +78,7 @@ def next_episode_spec() -> dict:
         "logline": bible.get("logline", ""),
         "setting": bible.get("setting", ""),
         "characters": bible.get("characters", []),
+        "voice_map": bible.get("voice_map", {}),
         "beat": beat, "recap": st.get("last_recap", ""),
         "is_finale": n == config.EPISODES_PER_STORY,
     }

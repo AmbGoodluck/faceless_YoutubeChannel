@@ -56,8 +56,7 @@ def cmd_render(rows, rid):
     if not out: print(f"No script for id {rid}; run --script."); return
     import json
     script = json.load(open(os.path.join(out, "script.json")))
-    narration = generate_script.load_narration(out)   # uses your edited narration.txt
-    generate_voice.make_voice(narration, out)
+    generate_voice.make_voice(out, script.get("voice_map", {}))   # multi-voice screenplay
     generate_visuals.make_visuals(script["scene_prompts"], out)
     if config.VIDEO_MODE == "ai":
         from src import generate_ai_video

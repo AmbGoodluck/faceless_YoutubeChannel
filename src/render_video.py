@@ -19,10 +19,10 @@ def _audio_dur(path: str) -> float:
 
 
 def render(out_dir: str) -> str:
+    from src import generate_script
     script = json.load(open(os.path.join(out_dir, "script.json")))
-    # captions follow the edited narration.txt if present
-    nt = os.path.join(out_dir, "narration.txt")
-    narration = open(nt).read().strip() if os.path.exists(nt) else script["narration"]
+    # captions = the spoken words only (speaker labels stripped), from the editable screenplay
+    narration = generate_script.load_narration(out_dir)
     voice = os.path.join(out_dir, "voice.mp3")
     scenes = sorted(
         [os.path.join(out_dir, f) for f in os.listdir(out_dir) if f.startswith("scene_")])
