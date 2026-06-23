@@ -152,9 +152,13 @@ Return ONLY a JSON object with these keys:
            each {{"speaker": "<a character name, or Narrator>", "text": "the spoken line"}}.
            Mostly character dialogue that advances the scene; grounded teen horror, NO gore.
            If episode > 1, the first line can be a short Narrator "Previously..." recap. End on the beat.
-  "scene_prompts": array of {config.SCENES_PER_VIDEO} visual descriptions IN STORY ORDER (start to
-           finish), each showing the named character(s) as realistic people doing the action at
-           that moment, dark cinematic, no on-screen text.
+  "scene_prompts": array of {config.SCENES_PER_VIDEO} CINEMATIC SHOT descriptions IN STORY ORDER
+           (one per beat). Describe each like a cinematographer: framing/shot size, the named
+           character(s) and their action, the LIGHTING (dramatic, motivated, shadows + rim),
+           the DEPTH (a foreground element, the sharp subject in midground, the background),
+           any LEADING LINES (road, corridor, wall) pulling the eye to the subject, the EMOTION
+           the viewer should feel in that beat, and the COLOUR/mood. Landscape 16:9 horror,
+           photoreal, no on-screen text.
   "youtube_title": "{spec['story_title']} — Ep {spec['episode']}: <hooky subtitle>" under 70 chars
   "youtube_description": 2-3 sentences with search keywords + a subscribe CTA, ending with an
                "original fiction" note

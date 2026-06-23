@@ -43,8 +43,8 @@ GEMINI_ENDPOINT = (
 # Serialized story arcs: one 6-8 min episode per day, 10 episodes per story,
 # then a brand-new story starts the next day.
 EPISODES_PER_STORY = 10
-EPISODE_WORDS = (900, 1200)    # ~6-8 min of narration
-SCENES_PER_VIDEO = 24          # distinct visual beats across the episode
+EPISODE_WORDS = (260, 420)     # ~1.5-2.5 min premium episodes (Gen-Z attention + cost)
+SCENES_PER_VIDEO = 14          # distinct cinematic shots across the episode
 
 # ---------------------------------------------------------------- Voice (Edge TTS, FREE)
 # List voices with:  edge-tts --list-voices | grep en-
@@ -65,13 +65,19 @@ FEMALE_VOICES = ["en-US-AriaNeural", "en-US-JennyNeural", "en-GB-SoniaNeural",
 
 # ---------------------------------------------------------------- Visuals (Pollinations, FREE)
 POLLINATIONS_BASE = "https://image.pollinations.ai/prompt"
-IMAGE_W, IMAGE_H = 1080, 1920  # vertical
+IMAGE_W, IMAGE_H = 1920, 1080  # 16:9 landscape — Netflix-movie framing for YouTube
 # Style presets — pick one by name in ACTIVE_STYLE below. Compare them with:
 #   python src/sample_styles.py
+# The "photoreal" preset encodes the five cinematography principles (lighting, depth,
+# composition/leading lines, emotion, colour grade) into every image + video prompt.
 STYLES = {
-    "photoreal": ("dark cinematic, moody low-key lighting, film grain, desaturated, "
-                  "amber practical light, realistic people with natural detailed faces, "
-                  "cinematic portrait depth, photorealistic, 4k, no on-screen text"),
+    "photoreal": ("cinematic Hollywood film still, shot on 35mm anamorphic, dramatic "
+                  "motivated lighting with deep shadows, soft key and rim light separating "
+                  "the subject; shallow depth of field — a blurred out-of-focus element in the "
+                  "foreground, the subject tack-sharp in the midground, atmospheric haze in the "
+                  "background; strong leading lines guiding the eye to the subject; moody "
+                  "cinematic colour grade (teal-and-amber, crushed blacks); volumetric light, "
+                  "fine film grain, photoreal, hyper-detailed, no on-screen text"),
     "ink_sketch": ("eerie pen and ink illustration, heavy cross-hatching, vintage "
                    "engraving, storybook horror, monochrome with a single amber accent, "
                    "no faces, no text"),
