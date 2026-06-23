@@ -1,6 +1,6 @@
 {
   "story_id": 1,
-  "episode": 2,
+  "episode": 3,
   "bible": {
     "story_title": "The Glitch in the Glass",
     "logline": "A group of friends discovers their antique mirror shows a subtly altered, increasingly sinister reflection of their world, threatening to trap them in its distorted reality.",
@@ -76,5 +76,5 @@
       "SAM": "en-GB-RyanNeural"
     }
   },
-  "last_recap": "The mirror's influence expands, showing Chloe a different outfit in her reflection and briefly altering a poster's image in Liam's monitor reflection. The friends are realizing the glitches are becoming more frequent and affecting more than just Maya's direct reflection."
+  "last_recap": "The friends discover the mirror isn't just reflecting; it's layering realities, incorporating their attempts to change it without deleting its own distortions. Its influence is growing stronger, culminating in a chilling message appearing in the glass."
 }
