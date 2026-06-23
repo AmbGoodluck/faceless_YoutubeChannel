@@ -21,6 +21,18 @@ CLIENT_SECRET = os.path.join(HERE, "..", "client_secret.json")
 TOKEN = os.path.join(HERE, "..", "token.json")
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 
+# Appended to every description for YouTube transparency / disclosure guidelines.
+DISCLAIMER = (
+    "\n\n———\n"
+    "⚠️ DISCLAIMER: This is a work of FICTION for entertainment. Names, characters, places "
+    "and events are products of the imagination; any resemblance to real persons (living or "
+    "dead) or actual events is purely coincidental.\n"
+    "This video contains AI-GENERATED visuals and SYNTHETIC (AI) voices.\n"
+    "Intended for mature teen+ audiences (13+). No graphic violence or gore.\n"
+    "If you or someone you know is struggling, please reach out to a trusted person or local "
+    "support service."
+)
+
 
 def _service():
     if os.environ.get("GOOGLE_REFRESH_TOKEN"):           # cloud / headless
@@ -62,7 +74,7 @@ def upload(out_dir: str, privacy="public") -> str:
     yt = _service()
     vid = _insert(yt, os.path.join(out_dir, "final.mp4"),
                   script.get("youtube_title", script["title"]),
-                  script.get("youtube_description", ""),
+                  script.get("youtube_description", "") + DISCLAIMER,
                   script.get("hashtags", []), privacy)
     thumb = os.path.join(out_dir, "thumbnail.jpg")
     if os.path.exists(thumb):
@@ -78,7 +90,7 @@ def upload(out_dir: str, privacy="public") -> str:
 
 def upload_short(path: str, title: str, description: str, tags: list, privacy="public") -> str:
     yt = _service()
-    vid = _insert(yt, path, (title + " #Shorts")[:100], description + "\n\n#Shorts", tags, privacy)
+    vid = _insert(yt, path, (title + " #Shorts")[:100], description + "\n\n#Shorts" + DISCLAIMER, tags, privacy)
     print(f"[youtube] Short uploaded https://youtu.be/{vid}")
     return vid
 
