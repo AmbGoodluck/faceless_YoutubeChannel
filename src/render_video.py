@@ -119,8 +119,11 @@ def render(out_dir: str) -> str:
         print("[render] caption burn unavailable here; muxing without burned captions")
         subprocess.run(plain, check=True)
 
-    # cleanup temp
-    for p in parts + [silent, concat_txt]:
+    # cleanup temp (concat_txt/_cat only exist on the fallback path — glob them safely)
+    import glob as _g
+    for p in (parts + [silent]
+              + _g.glob(os.path.join(out_dir, "_concat.txt"))
+              + _g.glob(os.path.join(out_dir, "_cat.mp4"))):
         try: os.remove(p)
         except OSError: pass
     print(f"[render] {final}")
