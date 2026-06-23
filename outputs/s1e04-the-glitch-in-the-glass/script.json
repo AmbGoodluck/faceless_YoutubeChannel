@@ -1,0 +1,164 @@
+{
+  "lines": [
+    {
+      "speaker": "Narrator",
+      "text": "Previously, the mirror revealed its unsettling nature, showing not just reflections, but distorted realities, layering them over one another. It absorbed their attempts to change it, and then, a chilling message appeared within the glass."
+    },
+    {
+      "speaker": "Maya",
+      "text": "It feels like it’s watching us, even when we’re not looking directly at it."
+    },
+    {
+      "speaker": "Liam",
+      "text": "That's just paranoia, Maya. It’s a mirror. It reflects light. It can’t actually 'watch' anything."
+    },
+    {
+      "speaker": "Chloe",
+      "text": "I don't know, Liam. I caught my reflection smiling earlier, just for a second. And I definitely wasn't smiling."
+    },
+    {
+      "speaker": "Sam",
+      "text": "Mine just blinked. Like, out of sync with me. It was weird. Felt… delayed, somehow."
+    },
+    {
+      "speaker": "Narrator",
+      "text": "The friends had gathered once more in Maya's attic bedroom, the mirror now propped against a far wall, facing away from them, but its presence was still palpable. They spoke in hushed tones, the afternoon light filtering weakly through the dusty window."
+    },
+    {
+      "speaker": "Maya",
+      "text": "We have to do something. We can’t just let it sit there, doing… whatever it's doing."
+    },
+    {
+      "speaker": "Liam",
+      "text": "What do you propose? Smashing it? We already saw what happens when we try to alter it directly. The cracks just… healed."
+    },
+    {
+      "speaker": "Chloe",
+      "text": "Maybe we just need to cover it. Completely. Block out the light, block out the… whatever."
+    },
+    {
+      "speaker": "Sam",
+      "text": "It’s worth a shot. I found some heavy-duty tarps in the garage. And rope. We can really secure it."
+    },
+    {
+      "speaker": "Narrator",
+      "text": "They retrieved the materials. A thick, dark tarp, industrial-grade, was pulled from a storage bin. The air in the attic was heavy with dust and a subtle, metallic scent that seemed to emanate from the mirror itself."
+    },
+    {
+      "speaker": "Maya",
+      "text": "Okay, everyone ready? On three. Let’s try to keep it steady."
+    },
+    {
+      "speaker": "Liam",
+      "text": "Wait. Let's make sure it's completely dark under there. No gaps."
+    },
+    {
+      "speaker": "Chloe",
+      "text": "This feels a bit like trying to put a blanket over a monster."
+    },
+    {
+      "speaker": "Sam",
+      "text": "Better a blanket than staring into its eyes."
+    },
+    {
+      "speaker": "Narrator",
+      "text": "With a coordinated effort, they lifted the heavy tarp, positioning it carefully over the tall, ornate mirror. It was a struggle, the sheer size of the antique making the task unwieldy. As the final edge settled, a profound darkness enveloped the glass. They then used rope to tightly secure the tarp around the frame, tying knots that would hold against any movement."
+    },
+    {
+      "speaker": "Maya",
+      "text": "There. Done. Can't see a thing."
+    },
+    {
+      "speaker": "Liam",
+      "text": "Good. Now let's just leave it. Come back in a few days, see if anything feels different."
+    },
+    {
+      "speaker": "Chloe",
+      "text": "Are you sure that’s enough? It still feels… present."
+    },
+    {
+      "speaker": "Sam",
+      "text": "It's the best we can do for now. We've cut off its access to light, to reflections. That has to do something."
+    },
+    {
+      "speaker": "Narrator",
+      "text": "They gathered their things, a cautious sense of relief settling over them. As they turned to leave the room, a faint, pulsing light caught Maya's eye. It wasn't bright, barely visible, but it was unmistakably there. It emanated from beneath the secured tarp, a soft, internal glow, like a trapped firefly."
+    },
+    {
+      "speaker": "Maya",
+      "text": "Guys… look."
+    },
+    {
+      "speaker": "Liam",
+      "text": "What is it?"
+    },
+    {
+      "speaker": "Chloe",
+      "text": "It's coming from… under the tarp."
+    },
+    {
+      "speaker": "Sam",
+      "text": "How? We sealed it. There’s no way light is getting in or out."
+    },
+    {
+      "speaker": "Narrator",
+      "text": "The light pulsed rhythmically, a soft, almost living beat from the covered mirror. It wasn't reflecting anything. It was creating its own light, an impossible glow from deep within its glass, through layers of thick, impenetrable fabric. It seemed to grow brighter, just slightly, with each beat, a silent, defiant pulse against their attempts to contain it."
+    }
+  ],
+  "scene_prompts": [
+    "Close up on the antique mirror, its ornate frame subtly distorted, reflecting a slightly too-bright room.",
+    "Maya stands a few feet from the mirror, a thoughtful, worried expression on her face as she avoids looking directly into it.",
+    "Liam leans against a doorframe, arms crossed, a skeptical frown on his face as he listens to Maya.",
+    "Chloe, sitting on a dusty armchair, eyes wide, her gaze fixed on the mirror's general direction, a shiver running through her.",
+    "Sam, hunched over a laptop, frantically typing, then looking up sharply as Chloe speaks, a disturbed look on his face.",
+    "Narrator: Wide shot of the attic bedroom, the antique mirror dominating one wall, its back now to the group, but its imposing presence felt.",
+    "Maya gestures towards the mirror, her expression determined but still anxious.",
+    "Liam throws his hands up in exasperation, indicating the mirror, his frustration evident.",
+    "Chloe glances around the room, then back at the mirror, her idea forming.",
+    "Sam stands up, pulling out his phone to search, a glimmer of practical hope in his eyes.",
+    "Narrator: A close-up on a thick, dark tarp being unrolled from a storage bin, heavy and durable.",
+    "Maya looks at her friends, her resolve hardening.",
+    "Liam nods, pragmatic and focused, looking for potential issues with the plan.",
+    "Chloe shivers slightly, a knowing look on her face as she eyes the mirror.",
+    "Sam tightens his grip on the tarp, ready to move.",
+    "Narrator: The four friends carefully lift the large, heavy tarp, a sense of quiet tension in their movements.",
+    "The tarp descends, slowly covering the ornate frame, plunging the mirror into darkness.",
+    "Liam and Sam meticulously tie thick ropes around the tarp-covered mirror, ensuring no gaps.",
+    "Maya steps back, exhaling slowly, a cautious sense of relief on her face.",
+    "Liam surveys their work, a hint of satisfaction on his face, though still wary.",
+    "Chloe looks doubtful, her intuition still prickling at the edges of her awareness.",
+    "Sam looks between the covered mirror and his friends, trying to reassure himself.",
+    "Narrator: Maya pauses mid-step towards the door, her eyes widening slightly as she spots something subtle.",
+    "Close up on the base of the covered mirror, a faint, rhythmic pulsing light emanating from beneath the heavy tarp, growing subtly brighter."
+  ],
+  "youtube_title": "The Glitch in the Glass — Ep 4: The Mirror That Glows",
+  "youtube_description": "The friends try to cover the sinister antique mirror, but its influence refuses to be contained. Their reflections are acting independently, and a new, unsettling phenomenon emerges. Will they ever truly escape its grasp? Subscribe for more chilling tales! #TheGlitchInTheGlass #HorrorStories #FacelessHorror #OriginalFiction",
+  "hashtags": [
+    "TheGlitchInTheGlass",
+    "HorrorStories",
+    "CreepyMirror",
+    "SupernaturalHorror",
+    "PsychologicalThriller",
+    "Dread",
+    "ScaryStories",
+    "UrbanLegend",
+    "FoundFootage",
+    "Mystery",
+    "RealityBending",
+    "ShortFilmHorror"
+  ],
+  "tiktok_caption": "Our reflections are acting on their own, and the mirror's glowing through the tarp. 😳 What even IS this thing? #creepy #horror #mirror #scary #glitch",
+  "thumbnail_text": "GLOWING IN THE DARK",
+  "pinned_comment": "What do you think the light means? Is it feeding, or trying to break free?",
+  "recap_for_next": "The friends covered the antique mirror with a heavy tarp, hoping to contain its unsettling influence, but a faint, pulsing light began to emanate from beneath the cover, defying their attempts to hide it.",
+  "narration": "Previously, the mirror revealed its unsettling nature, showing not just reflections, but distorted realities, layering them over one another. It absorbed their attempts to change it, and then, a chilling message appeared within the glass. It feels like it’s watching us, even when we’re not looking directly at it. That's just paranoia, Maya. It’s a mirror. It reflects light. It can’t actually 'watch' anything. I don't know, Liam. I caught my reflection smiling earlier, just for a second. And I definitely wasn't smiling. Mine just blinked. Like, out of sync with me. It was weird. Felt… delayed, somehow. The friends had gathered once more in Maya's attic bedroom, the mirror now propped against a far wall, facing away from them, but its presence was still palpable. They spoke in hushed tones, the afternoon light filtering weakly through the dusty window. We have to do something. We can’t just let it sit there, doing… whatever it's doing. What do you propose? Smashing it? We already saw what happens when we try to alter it directly. The cracks just… healed. Maybe we just need to cover it. Completely. Block out the light, block out the… whatever. It’s worth a shot. I found some heavy-duty tarps in the garage. And rope. We can really secure it. They retrieved the materials. A thick, dark tarp, industrial-grade, was pulled from a storage bin. The air in the attic was heavy with dust and a subtle, metallic scent that seemed to emanate from the mirror itself. Okay, everyone ready? On three. Let’s try to keep it steady. Wait. Let's make sure it's completely dark under there. No gaps. This feels a bit like trying to put a blanket over a monster. Better a blanket than staring into its eyes. With a coordinated effort, they lifted the heavy tarp, positioning it carefully over the tall, ornate mirror. It was a struggle, the sheer size of the antique making the task unwieldy. As the final edge settled, a profound darkness enveloped the glass. They then used rope to tightly secure the tarp around the frame, tying knots that would hold against any movement. There. Done. Can't see a thing. Good. Now let's just leave it. Come back in a few days, see if anything feels different. Are you sure that’s enough? It still feels… present. It's the best we can do for now. We've cut off its access to light, to reflections. That has to do something. They gathered their things, a cautious sense of relief settling over them. As they turned to leave the room, a faint, pulsing light caught Maya's eye. It wasn't bright, barely visible, but it was unmistakably there. It emanated from beneath the secured tarp, a soft, internal glow, like a trapped firefly. Guys… look. What is it? It's coming from… under the tarp. How? We sealed it. There’s no way light is getting in or out. The light pulsed rhythmically, a soft, almost living beat from the covered mirror. It wasn't reflecting anything. It was creating its own light, an impossible glow from deep within its glass, through layers of thick, impenetrable fabric. It seemed to grow brighter, just slightly, with each beat, a silent, defiant pulse against their attempts to contain it.",
+  "voice_map": {
+    "MAYA": "en-US-AriaNeural",
+    "LIAM": "en-US-EricNeural",
+    "CHLOE": "en-US-JennyNeural",
+    "SAM": "en-GB-RyanNeural"
+  },
+  "id": "1.4",
+  "title": "The Glitch in the Glass — Ep 4: The Mirror That Glows",
+  "slug": "s1e04-the-glitch-in-the-glass"
+}
