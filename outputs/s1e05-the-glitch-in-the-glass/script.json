@@ -1,0 +1,184 @@
+{
+  "lines": [
+    {
+      "speaker": "Narrator",
+      "text": "Previously on The Glitch in the Glass: Maya and her friends covered the antique mirror with a heavy tarp, hoping to contain its unsettling influence, but a faint, pulsing light began to emanate from beneath the cover, defying their attempts to hide it."
+    },
+    {
+      "speaker": "Maya",
+      "text": "It’s getting brighter, isn’t it?"
+    },
+    {
+      "speaker": "Liam",
+      "text": "I thought covering it would make it stop. I really did."
+    },
+    {
+      "speaker": "Chloe",
+      "text": "It’s like it’s… breathing. A slow, steady pulse from underneath."
+    },
+    {
+      "speaker": "Sam",
+      "text": "Alright, so the physical solution isn’t working. Time for Plan B: research. Deep dive into everything I can find about old mirrors, weird folklore, anything. You guys keep an eye on it. Or, you know, don’t stare directly at the pulsing darkness."
+    },
+    {
+      "speaker": "Narrator",
+      "text": "Sam spent the next few hours holed up in Maya’s den, surrounded by a tangle of laptop chargers and forgotten coffee cups. His fingers flew across the keyboard, searching through dusty online archives and obscure forums."
+    },
+    {
+      "speaker": "Sam",
+      "text": "Okay, this is… interesting. A lot of old cultures believed mirrors weren't just reflections, but actual doorways. Doorways to other realms, to the spirit world."
+    },
+    {
+      "speaker": "Liam",
+      "text": "Spirit world? You mean like ghosts? Because a faint pulsing light isn't exactly a spectral presence."
+    },
+    {
+      "speaker": "Sam",
+      "text": "No, not exactly ghosts. More like… parallel realities. Some call them 'doorway mirrors' or even 'soul traps.' The idea is that the reflection isn't just an image, but a potential entrance or even a place where a part of you can get stuck."
+    },
+    {
+      "speaker": "Chloe",
+      "text": "A soul trap? That sounds… intense. What kind of folklore is this from?"
+    },
+    {
+      "speaker": "Sam",
+      "text": "Mostly European, some Romani. There are stories about mirrors showing alternate futures, or sometimes, showing the 'true' nature of things, even if it's terrifying. And sometimes, they just show a world that's... not quite right."
+    },
+    {
+      "speaker": "Maya",
+      "text": "Not quite right. Like what we’ve been seeing. The subtle changes."
+    },
+    {
+      "speaker": "Sam",
+      "text": "Exactly. The folklore suggests that if the reflected world starts to solidify, to become more distinct, it's gaining power. And the reflections themselves… if they start looking different from you, that's a really bad sign."
+    },
+    {
+      "speaker": "Liam",
+      "text": "Different how? Like, bad hair day different, or… gaunt and desperate different?"
+    },
+    {
+      "speaker": "Sam",
+      "text": "The stories are pretty vague, but 'gaunt and desperate' sounds like it fits the bill. It's almost like the mirror is siphoning something. Or trying to replace something."
+    },
+    {
+      "speaker": "Chloe",
+      "text": "Replace something? Like us?"
+    },
+    {
+      "speaker": "Narrator",
+      "text": "A shiver ran through the room, colder than the late autumn air. They looked at each other, the unspoken fear hanging heavy between them. Later that evening, the pulsing light from the mirror seemed to have intensified. It was no longer just a faint glow but a steady, rhythmic thrum of light pushing against the heavy canvas tarp."
+    },
+    {
+      "speaker": "Maya",
+      "text": "It’s too much. I can’t just leave it covered if it’s getting stronger. What if it just... breaks through?"
+    },
+    {
+      "speaker": "Liam",
+      "text": "But what’s the alternative? Staring into it? Sam just said it might be trying to 'replace' us."
+    },
+    {
+      "speaker": "Chloe",
+      "text": "We need to look. Just for a second. To see what Sam was talking about. If our reflections are really… changing."
+    },
+    {
+      "speaker": "Sam",
+      "text": "It's risky. But if the folklore is true, seeing the current state of the reflection might give us a clue on what to do next. Just… be prepared. And don't reach out."
+    },
+    {
+      "speaker": "Narrator",
+      "text": "With trembling hands, Maya slowly lifted a corner of the tarp. The light that escaped was surprisingly dull, a sickly grey glow. But it was the reflection itself that stole their breath."
+    },
+    {
+      "speaker": "Maya",
+      "text": "Oh my god."
+    },
+    {
+      "speaker": "Liam",
+      "text": "What… what happened to us?"
+    },
+    {
+      "speaker": "Chloe",
+      "text": "It’s… darker. The room is desolate. And our reflections…"
+    },
+    {
+      "speaker": "Sam",
+      "text": "They’re gaunt. Hollow-eyed. Like they haven’t eaten in weeks. And their eyes… they look desperate. Trapped."
+    },
+    {
+      "speaker": "Narrator",
+      "text": "The reflected versions of themselves were ghastly caricatures, their faces drawn and pale, their clothes tattered. The room behind them in the glass was a decaying version of Maya's bedroom, devoid of warmth or life. And as they watched, the reflections began to move, ever so slightly, independently of their own actions. Their gaunt, desperate eyes stared back, full of a chilling plea."
+    },
+    {
+      "speaker": "Maya",
+      "text": "They’re trying to tell us something."
+    },
+    {
+      "speaker": "Chloe",
+      "text": "No, Maya. They’re trying to get out."
+    },
+    {
+      "speaker": "Liam",
+      "text": "And the reflected door… it’s open."
+    },
+    {
+      "speaker": "Narrator",
+      "text": "In the mirror, the reflected bedroom door, usually closed, now stood ajar, revealing a pitch-black hallway beyond. And from that darkness, a faint, rustling sound began to emanate, growing steadily louder."
+    }
+  ],
+  "scene_prompts": [
+    "A heavy canvas tarp covers an antique, ornate mirror in Maya's bedroom. A faint, rhythmic pulsing light is visible from beneath the tarp, illuminating the edges.",
+    "Maya, Liam, Chloe, and Sam stand cautiously around the covered mirror. Maya points to the pulsing light, her expression worried.",
+    "Close up on Liam's face, a mixture of frustration and disbelief, as he looks at the pulsing light.",
+    "Chloe stares intently at the covered mirror, her brow furrowed, a sense of unease radiating from her.",
+    "Sam, looking determined, pulls out his phone and points towards the door, signaling he's going to do research. The others watch him go.",
+    "Sam sits at a desk in Maya's den, surrounded by an open laptop, a tablet, and several books. He's furiously typing, his face illuminated by the screen's glow.",
+    "Close up on Sam's laptop screen, showing a dense webpage filled with old text and archaic illustrations of mirrors.",
+    "Sam looks up from his laptop, rubbing his eyes, a thoughtful expression on his face as he processes information.",
+    "Liam leans against a doorframe, arms crossed, a skeptical look on his face as he listens to Sam.",
+    "Chloe sits on the floor near Sam, listening intently, her artistic eye seeming to process the implications of his research.",
+    "Maya sits opposite Sam, hands clasped, a growing sense of dread on her face as she absorbs the new information.",
+    "Sam gestures emphatically with his hands as he explains the concept of 'soul traps' and 'doorway mirrors'.",
+    "Close up on Maya's face, eyes wide with a dawning horror as she connects Sam's research to their experiences.",
+    "Liam's expression shifts from skepticism to genuine concern as Sam describes the potential dangers.",
+    "The four friends are gathered back in Maya's bedroom, looking at the covered mirror. The pulsing light beneath the tarp is now visibly brighter and more insistent.",
+    "Maya reaches out a hand towards the tarp, hesitates, then slowly begins to lift a corner.",
+    "Close up on the corner of the tarp being slowly lifted, revealing a dull, sickly grey light emanating from the mirror's surface.",
+    "The friends gasp in unison, their faces contorted in shock and horror as they see the reflection.",
+    "The mirror's reflection, seen from their perspective, shows a vastly darker, desolate version of Maya's bedroom. Their own reflections are gaunt, pale, and hollow-eyed, their clothes tattered.",
+    "Close up on Maya's reflection in the mirror, her reflected self looking desperate and frail, with wide, pleading eyes.",
+    "Close up on Liam's reflection, equally gaunt, a look of trapped fear in his eyes.",
+    "Close up on Chloe's reflection, her reflected face thin and drawn, mouth slightly open in a silent scream.",
+    "The reflected bedroom door in the mirror is now ajar, revealing a swirling, inky blackness beyond. A subtle ripple of motion is visible within the darkness.",
+    "The four friends stand frozen, staring at the mirror's reflection, their faces a mixture of terror and dawning comprehension. The reflected door is now more open, and a faint, rustling sound seems to emerge from the blackness."
+  ],
+  "youtube_title": "The Glitch in the Glass — Ep 5: The Soul Trap Revealed",
+  "youtube_description": "The antique mirror reveals its dark secrets in this chilling episode. Sam uncovers ancient folklore about 'doorway mirrors' and 'soul traps', but nothing prepares them for the gaunt, desperate reflections staring back. What horrifying truth lies within the glass? Subscribe for more 'Lights Out Tales' and delve into original fiction that blurs the line between reality and nightmare.",
+  "hashtags": [
+    "HorrorStory",
+    "PsychologicalThriller",
+    "CreepyMirror",
+    "SupernaturalHorror",
+    "FolkloricHorror",
+    "HauntedMirror",
+    "AlternateReality",
+    "LightsOutTales",
+    "TheGlitchInTheGlass",
+    "ScaryStories",
+    "IndieHorror",
+    "DarkFantasy"
+  ],
+  "tiktok_caption": "The mirror isn't just reflecting… it's revealing. Sam's research uncovers ancient lore of 'soul traps,' and the reflections are getting… desperate. What's happening in the glass? 🪞 #TheGlitchInTheGlass #HorrorStory",
+  "thumbnail_text": "TRAPPED IN GLASS",
+  "pinned_comment": "What do you think the reflected versions of themselves are trying to communicate? 🤔",
+  "recap_for_next": "Sam researched folklore about 'doorway mirrors' and 'soul traps,' discovering that their reflections in the mirror now appear gaunt and desperate, trapped in a desolate version of their world, with a reflected door in the mirror standing ajar.",
+  "narration": "Previously on The Glitch in the Glass: Maya and her friends covered the antique mirror with a heavy tarp, hoping to contain its unsettling influence, but a faint, pulsing light began to emanate from beneath the cover, defying their attempts to hide it. It’s getting brighter, isn’t it? I thought covering it would make it stop. I really did. It’s like it’s… breathing. A slow, steady pulse from underneath. Alright, so the physical solution isn’t working. Time for Plan B: research. Deep dive into everything I can find about old mirrors, weird folklore, anything. You guys keep an eye on it. Or, you know, don’t stare directly at the pulsing darkness. Sam spent the next few hours holed up in Maya’s den, surrounded by a tangle of laptop chargers and forgotten coffee cups. His fingers flew across the keyboard, searching through dusty online archives and obscure forums. Okay, this is… interesting. A lot of old cultures believed mirrors weren't just reflections, but actual doorways. Doorways to other realms, to the spirit world. Spirit world? You mean like ghosts? Because a faint pulsing light isn't exactly a spectral presence. No, not exactly ghosts. More like… parallel realities. Some call them 'doorway mirrors' or even 'soul traps.' The idea is that the reflection isn't just an image, but a potential entrance or even a place where a part of you can get stuck. A soul trap? That sounds… intense. What kind of folklore is this from? Mostly European, some Romani. There are stories about mirrors showing alternate futures, or sometimes, showing the 'true' nature of things, even if it's terrifying. And sometimes, they just show a world that's... not quite right. Not quite right. Like what we’ve been seeing. The subtle changes. Exactly. The folklore suggests that if the reflected world starts to solidify, to become more distinct, it's gaining power. And the reflections themselves… if they start looking different from you, that's a really bad sign. Different how? Like, bad hair day different, or… gaunt and desperate different? The stories are pretty vague, but 'gaunt and desperate' sounds like it fits the bill. It's almost like the mirror is siphoning something. Or trying to replace something. Replace something? Like us? A shiver ran through the room, colder than the late autumn air. They looked at each other, the unspoken fear hanging heavy between them. Later that evening, the pulsing light from the mirror seemed to have intensified. It was no longer just a faint glow but a steady, rhythmic thrum of light pushing against the heavy canvas tarp. It’s too much. I can’t just leave it covered if it’s getting stronger. What if it just... breaks through? But what’s the alternative? Staring into it? Sam just said it might be trying to 'replace' us. We need to look. Just for a second. To see what Sam was talking about. If our reflections are really… changing. It's risky. But if the folklore is true, seeing the current state of the reflection might give us a clue on what to do next. Just… be prepared. And don't reach out. With trembling hands, Maya slowly lifted a corner of the tarp. The light that escaped was surprisingly dull, a sickly grey glow. But it was the reflection itself that stole their breath. Oh my god. What… what happened to us? It’s… darker. The room is desolate. And our reflections… They’re gaunt. Hollow-eyed. Like they haven’t eaten in weeks. And their eyes… they look desperate. Trapped. The reflected versions of themselves were ghastly caricatures, their faces drawn and pale, their clothes tattered. The room behind them in the glass was a decaying version of Maya's bedroom, devoid of warmth or life. And as they watched, the reflections began to move, ever so slightly, independently of their own actions. Their gaunt, desperate eyes stared back, full of a chilling plea. They’re trying to tell us something. No, Maya. They’re trying to get out. And the reflected door… it’s open. In the mirror, the reflected bedroom door, usually closed, now stood ajar, revealing a pitch-black hallway beyond. And from that darkness, a faint, rustling sound began to emanate, growing steadily louder.",
+  "voice_map": {
+    "MAYA": "en-US-AriaNeural",
+    "LIAM": "en-US-EricNeural",
+    "CHLOE": "en-US-JennyNeural",
+    "SAM": "en-GB-RyanNeural"
+  },
+  "id": "1.5",
+  "title": "The Glitch in the Glass — Ep 5: The Soul Trap Revealed",
+  "slug": "s1e05-the-glitch-in-the-glass"
+}

@@ -1,6 +1,6 @@
 {
   "story_id": 1,
-  "episode": 4,
+  "episode": 5,
   "bible": {
     "story_title": "The Glitch in the Glass",
     "logline": "A group of friends discovers their antique mirror shows a subtly altered, increasingly sinister reflection of their world, threatening to trap them in its distorted reality.",
@@ -76,5 +76,5 @@
       "SAM": "en-GB-RyanNeural"
     }
   },
-  "last_recap": "The friends covered the antique mirror with a heavy tarp, hoping to contain its unsettling influence, but a faint, pulsing light began to emanate from beneath the cover, defying their attempts to hide it."
+  "last_recap": "Sam researched folklore about 'doorway mirrors' and 'soul traps,' discovering that their reflections in the mirror now appear gaunt and desperate, trapped in a desolate version of their world, with a reflected door in the mirror standing ajar."
 }
