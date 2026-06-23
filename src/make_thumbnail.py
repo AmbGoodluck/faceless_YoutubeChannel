@@ -5,7 +5,7 @@ and the channel mark. Looks like a streaming poster.
 
 Produces: <out_dir>/thumbnail.jpg
 """
-import os, sys, json, glob
+import os, sys, json, glob, urllib.parse, requests
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -29,8 +29,31 @@ def _font(size, bold=True):
     return ImageFont.load_default()
 
 
+def _keyart(out_dir, script):
+    """Generate a dedicated cast-forward poster image (faces to camera) for the thumbnail."""
+    dest = os.path.join(out_dir, "keyart.jpg")
+    if os.path.exists(dest):
+        return dest
+    pp = script.get("poster_prompt")
+    if not pp:
+        return None
+    url = (f"{config.POLLINATIONS_BASE}/{urllib.parse.quote(pp + ', ' + config.VISUAL_STYLE)}"
+           f"?width=1280&height=720&nologo=true&seed=7")
+    try:
+        r = requests.get(url, timeout=120); r.raise_for_status()
+        with open(dest, "wb") as f:
+            f.write(r.content)
+        print(f"[keyart] {dest}")
+        return dest
+    except Exception as e:
+        print(f"[keyart] failed: {e}")
+        return None
+
+
 def _backdrop(out_dir):
-    imgs = sorted(glob.glob(os.path.join(out_dir, "scene_*.jpg")))
+    # prefer the cast-forward keyart, else the first scene image
+    imgs = [os.path.join(out_dir, "keyart.jpg")] + sorted(glob.glob(os.path.join(out_dir, "scene_*.jpg")))
+    imgs = [p for p in imgs if os.path.exists(p)]
     if imgs:
         im = Image.open(imgs[0]).convert("RGB")
         # cover-crop to 16:9
@@ -60,6 +83,7 @@ def make(out_dir: str) -> str:
     series = yt.split("—")[0].strip() if "—" in yt else yt
     big = (script.get("thumbnail_text") or series).upper()
 
+    _keyart(out_dir, script)            # generate the cast poster shot if missing
     img = _backdrop(out_dir).convert("RGBA")
     # cinematic darkening: bottom + left gradient for legibility
     grad = Image.new("L", (W, H), 0)

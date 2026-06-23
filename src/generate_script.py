@@ -166,7 +166,10 @@ Return ONLY a JSON object with these keys:
   "tiktok_caption": under 150 chars, teases THIS episode, ends on a curiosity hook
   "thumbnail_text": 2-4 punchy uppercase words for the thumbnail
   "pinned_comment": one engagement-bait question about this episode
-  "recap_for_next": 1-2 sentences summarizing what happened this episode (fed into the next one)"""
+  "recap_for_next": 1-2 sentences summarizing what happened this episode (fed into the next one)
+  "poster_prompt": one striking MOVIE-POSTER key shot of the main character(s) — their faces
+           clearly visible looking toward camera, dramatic horror lighting, intense expression,
+           cinematic, landscape 16:9, photoreal, no on-screen text (used for the clickable thumbnail)"""
 
     data = gen_json(config.BRAND_SYSTEM_PROMPT, user_prompt)
 
