@@ -67,8 +67,12 @@ def _call_claude(system: str, user: str) -> str:
         "messages": [{"role": "user", "content":
                       user + "\n\nReturn ONLY the JSON object — no prose, no markdown fences."}],
     }
+    key = os.environ.get("ANTHROPIC_API_KEY")
+    if not key:
+        raise RuntimeError("ANTHROPIC_API_KEY is not set — add it to .env (local) and as a "
+                           "GitHub Actions secret. This pipeline is Claude-only; there is no fallback.")
     headers = {
-        "x-api-key": os.environ["ANTHROPIC_API_KEY"],
+        "x-api-key": key,
         "anthropic-version": "2023-06-01",
         "content-type": "application/json",
     }
@@ -96,10 +100,8 @@ def _call_claude(system: str, user: str) -> str:
 
 
 def _call_llm(system: str, user: str) -> str:
-    """Dispatch to the configured provider (config.LLM_PROVIDER)."""
-    if config.LLM_PROVIDER == "claude":
-        return _call_claude(system, user)
-    return _call_gemini(system, user)
+    """Claude only — Gemini has been removed from the active path."""
+    return _call_claude(system, user)
 
 
 def _extract_json(raw: str) -> str:

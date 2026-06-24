@@ -34,16 +34,13 @@ no stage directions inside the narration, no headers, no markdown.
 """
 
 # ---------------------------------------------------------------- Script (LLM)
-# Which LLM writes the scripts: "claude" (Anthropic API, reliable, paid) or
-# "gemini" (Google free tier, rate-limited). Switch the whole channel here.
+# Claude ONLY. Needs ANTHROPIC_API_KEY in .env / GitHub secret.
 LLM_PROVIDER = "claude"
-
-# ---- Claude (Anthropic API) — needs ANTHROPIC_API_KEY in .env / GitHub secret
 CLAUDE_ENDPOINT = "https://api.anthropic.com/v1/messages"
-CLAUDE_MODEL = "claude-sonnet-4-6"   # balanced quality/cost; "claude-haiku-4-5-20251001" is cheaper, "claude-opus-4-8" is top-end
-CLAUDE_MAX_TOKENS = 8192             # enough for a full 6-8 min screenplay + 22 scene prompts + metadata
+CLAUDE_MODEL = "claude-haiku-4-5-20251001"   # cheapest model; bump to sonnet-4-6 / opus-4-8 for more quality
+CLAUDE_MAX_TOKENS = 8192                      # enough for a 6-8 min screenplay + 22 scene prompts + metadata
 
-# ---- Gemini (free fallback) — key from https://aistudio.google.com/apikey
+# ---- Gemini (legacy, no longer used in the active path) ----
 GEMINI_MODEL = "gemini-2.5-flash"
 GEMINI_ENDPOINT = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
