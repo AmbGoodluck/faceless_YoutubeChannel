@@ -27,24 +27,79 @@ def _call_gemini(system: str, user: str) -> str:
             "thinkingConfig": {"thinkingBudget": 0},
         },
     }
-    r = None
-    for attempt in range(5):
-        r = requests.post(
-            config.GEMINI_ENDPOINT,
-            params={"key": os.environ["GEMINI_API_KEY"]},
-            json=body, timeout=120,
-        )
-        if r.status_code in (429, 500, 502, 503, 504):   # transient — back off and retry
-            wait = 5 * (attempt + 1)
-            print(f"[gemini] {r.status_code}, retrying in {wait}s...")
-            time.sleep(wait)
-            continue
-        break
-    r.raise_for_status()
-    cand = r.json()["candidates"][0]
-    if cand.get("finishReason") == "MAX_TOKENS":
-        raise RuntimeError("Gemini hit the token limit; raise maxOutputTokens.")
-    return cand["content"]["parts"][0]["text"]
+    # Gentle exponential backoff. ONE retry layer (gen_json no longer re-calls on
+    # transient errors), so we don't torch the free-tier daily request quota.
+    delay, last = 10, None
+    for attempt in range(7):
+        try:
+            r = requests.post(
+                config.GEMINI_ENDPOINT,
+                params={"key": os.environ["GEMINI_API_KEY"]},
+                json=body, timeout=120,
+            )
+        except requests.RequestException as e:                  # network blip
+            last = e
+            print(f"[gemini] network error: {e}; retry in {delay}s")
+            time.sleep(delay); delay = min(delay * 2, 120); continue
+        if r.status_code in (429, 500, 502, 503, 504):          # transient — back off
+            ra = r.headers.get("Retry-After")
+            wait = int(ra) if (ra and ra.isdigit()) else delay
+            print(f"[gemini] {r.status_code}; backing off {wait}s (attempt {attempt+1}/7)")
+            time.sleep(wait); delay = min(delay * 2, 120); last = r; continue
+        r.raise_for_status()
+        cand = r.json()["candidates"][0]
+        if cand.get("finishReason") == "MAX_TOKENS":
+            raise RuntimeError("Gemini hit the token limit; raise maxOutputTokens.")
+        return cand["content"]["parts"][0]["text"]
+    code = getattr(last, "status_code", "network")
+    raise RuntimeError(
+        f"Gemini unavailable after 7 backoffs (last={code}). This is almost always the "
+        "free-tier DAILY request quota — wait for the daily reset (~midnight Pacific) or "
+        "enable pay-as-you-go billing on the API key (Flash costs pennies).")
+
+
+def _call_claude(system: str, user: str) -> str:
+    """Anthropic Messages API. Raw HTTP (no SDK dependency). Returns the text body."""
+    body = {
+        "model": config.CLAUDE_MODEL,
+        "max_tokens": config.CLAUDE_MAX_TOKENS,
+        "system": system,
+        "messages": [{"role": "user", "content":
+                      user + "\n\nReturn ONLY the JSON object — no prose, no markdown fences."}],
+    }
+    headers = {
+        "x-api-key": os.environ["ANTHROPIC_API_KEY"],
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+    }
+    delay, last = 5, None
+    for attempt in range(7):
+        try:
+            r = requests.post(config.CLAUDE_ENDPOINT, headers=headers, json=body, timeout=180)
+        except requests.RequestException as e:
+            last = e
+            print(f"[claude] network error: {e}; retry in {delay}s")
+            time.sleep(delay); delay = min(delay * 2, 120); continue
+        if r.status_code in (429, 500, 502, 503, 529):          # rate-limited / overloaded
+            ra = r.headers.get("retry-after")
+            wait = int(ra) if (ra and ra.isdigit()) else delay
+            print(f"[claude] {r.status_code}; backing off {wait}s (attempt {attempt+1}/7)")
+            time.sleep(wait); delay = min(delay * 2, 120); last = r; continue
+        r.raise_for_status()
+        data = r.json()
+        if data.get("stop_reason") == "max_tokens":
+            raise RuntimeError("Claude hit max_tokens; raise CLAUDE_MAX_TOKENS.")
+        return "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
+    code = getattr(last, "status_code", "network")
+    raise RuntimeError(f"Claude API unavailable after 7 backoffs (last={code}). "
+                       "Check the ANTHROPIC_API_KEY and that the account has credit.")
+
+
+def _call_llm(system: str, user: str) -> str:
+    """Dispatch to the configured provider (config.LLM_PROVIDER)."""
+    if config.LLM_PROVIDER == "claude":
+        return _call_claude(system, user)
+    return _call_gemini(system, user)
 
 
 def _extract_json(raw: str) -> str:
@@ -54,19 +109,19 @@ def _extract_json(raw: str) -> str:
     return raw[start:end + 1] if start != -1 and end != -1 else raw
 
 
-def gen_json(system: str, user: str, attempts: int = 8) -> dict:
-    """Call Gemini and parse JSON, retrying every 5s until it succeeds (LLMs sometimes
-    emit a malformed character in long outputs). Raises only after `attempts` tries."""
-    import requests as _rq
+def gen_json(system: str, user: str, attempts: int = 3) -> dict:
+    """Parse Gemini's JSON, regenerating only when the *content* is malformed.
+    Transient HTTP errors are handled inside _call_gemini (with backoff), so we do
+    NOT re-call here on those — that's what was burning the daily quota."""
     last = None
     for i in range(attempts):
         try:
-            return json.loads(_extract_json(_call_gemini(system, user)))
-        except (json.JSONDecodeError, KeyError, RuntimeError, _rq.RequestException) as e:
+            return json.loads(_extract_json(_call_llm(system, user)))
+        except (json.JSONDecodeError, KeyError) as e:        # 200 OK but bad JSON -> regenerate
             last = e
-            print(f"[gemini] response not usable (try {i+1}/{attempts}): {e}; retrying in 5s")
-            time.sleep(5)
-    raise RuntimeError(f"Gemini failed to return valid JSON after {attempts} tries: {last}")
+            print(f"[gemini] unparseable JSON (try {i+1}/{attempts}): {e}; regenerating")
+            time.sleep(3)
+    raise RuntimeError(f"Gemini returned unparseable JSON after {attempts} tries: {last}")
 
 
 def generate(row: dict) -> dict:
@@ -97,7 +152,7 @@ Return ONLY a JSON object with exactly these keys:
   "thumbnail_text": 2-4 punchy words for the YouTube thumbnail (uppercase impact, e.g. "SHE WASN'T ALONE")
   "pinned_comment": one short engagement-bait question to pin in the comments (drives replies)"""
 
-    raw = _call_gemini(config.BRAND_SYSTEM_PROMPT, user_prompt)
+    raw = _call_llm(config.BRAND_SYSTEM_PROMPT, user_prompt)
     data = json.loads(_extract_json(raw))
 
     data["id"] = row["id"]

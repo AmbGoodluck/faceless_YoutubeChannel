@@ -33,8 +33,17 @@ OUTPUT: a tight script meant to be read aloud as a voiceover. Plain spoken sente
 no stage directions inside the narration, no headers, no markdown.
 """
 
-# ---------------------------------------------------------------- Script (Gemini, FREE)
-# Free key from https://aistudio.google.com/apikey  (no credit card)
+# ---------------------------------------------------------------- Script (LLM)
+# Which LLM writes the scripts: "claude" (Anthropic API, reliable, paid) or
+# "gemini" (Google free tier, rate-limited). Switch the whole channel here.
+LLM_PROVIDER = "claude"
+
+# ---- Claude (Anthropic API) — needs ANTHROPIC_API_KEY in .env / GitHub secret
+CLAUDE_ENDPOINT = "https://api.anthropic.com/v1/messages"
+CLAUDE_MODEL = "claude-sonnet-4-6"   # balanced quality/cost; "claude-haiku-4-5-20251001" is cheaper, "claude-opus-4-8" is top-end
+CLAUDE_MAX_TOKENS = 8192             # enough for a full 6-8 min screenplay + 22 scene prompts + metadata
+
+# ---- Gemini (free fallback) — key from https://aistudio.google.com/apikey
 GEMINI_MODEL = "gemini-2.5-flash"
 GEMINI_ENDPOINT = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -43,9 +52,9 @@ GEMINI_ENDPOINT = (
 # Serialized story arcs: one 6-8 min episode per day, 10 episodes per story,
 # then a brand-new story starts the next day.
 EPISODES_PER_STORY = 10
-# ~6-8 min episodes. Narration is read slightly slowed (~138 wpm), plus pauses
-# between screenplay lines, so 900-1150 spoken words lands around 6.5-8.5 min.
-EPISODE_WORDS = (900, 1150)
+# ~6-8 min episodes. The model tends to under-deliver, so we aim high; with the
+# slowed read (~138 wpm) + pauses between screenplay lines this lands ~6.5-8.5 min.
+EPISODE_WORDS = (1150, 1450)
 SCENES_PER_VIDEO = 22          # distinct cinematic shots so a 7-min episode never feels static
 
 # ---------------------------------------------------------------- Voice (Edge TTS, FREE)
