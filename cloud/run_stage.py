@@ -133,12 +133,59 @@ def stage_publish(slug):
     print(f"::notice::published {slug}")
 
 
+def stage_auto():
+    """Fully automatic: generate -> render -> publish to YouTube, no approval gate.
+    Runs end-to-end in ONE Actions job. Uploads the full video to YouTube (cast
+    thumbnail + fiction/AI disclaimer); cuts 3 vertical clips to Drive for TikTok.
+    Uploads ONLY the full video (no separate Short) to stay under the daily quota."""
+    from src import story
+    spec = story.next_episode_spec()
+    data = generate_script.generate_episode(spec)
+    story.save_recap(data.get("recap_for_next", ""))   # advance the episode counter
+    slug = data["slug"]; out = _dir(slug)
+    _save_state(slug, {"slug": slug, "id": data["id"]})
+
+    # render (free stills pipeline): multi-voice + cinematic images + ffmpeg + thumbnail
+    generate_voice.make_voice(out, data.get("voice_map", {}))
+    generate_visuals.make_visuals(data["scene_prompts"], out)
+    render_video.render(out)
+    make_thumbnail.make(out)
+
+    # publish the full episode to YouTube
+    yt = upload_youtube.upload(out)                      # full video + thumbnail + disclaimer
+
+    # cut vertical teaser clips and stash them in Drive for manual TikTok posting
+    clip_links = []
+    try:
+        clip_for_tiktok.clip_video(os.path.join(out, "final.mp4"))
+        folder = upload_drive.ensure_folder(slug, ROOT_FOLDER)
+        for clip in sorted(glob.glob(os.path.join(out, "tiktok_part*.mp4"))):
+            up = upload_drive.upload(clip, folder, os.path.basename(clip))
+            clip_links.append(up.get("link", ""))
+    except Exception as e:
+        print(f"[auto] clip/drive step skipped: {e}")
+
+    try:
+        rows = _rows(); _set_status(rows, data.get("id", slug), "posted")
+    except Exception:
+        pass
+
+    clips_txt = ("  |  ".join(f"<{l}|clip {i+1}>" for i, l in enumerate(clip_links))
+                 if clip_links else "(clips skipped)")
+    slack_blocks._post([{"type": "section", "text": {"type": "mrkdwn",
+        "text": (f":rocket: *Auto-published:* {data.get('youtube_title', slug)}\n"
+                 f"https://youtu.be/{yt}\nTikTok clips (Drive): {clips_txt}")}}])
+    print(f"::notice::auto-published {slug} -> https://youtu.be/{yt}")
+
+
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("stage", choices=["script", "render", "publish"])
+    p.add_argument("stage", choices=["auto", "script", "render", "publish"])
     p.add_argument("--episode")
     a = p.parse_args()
-    if a.stage == "script":
+    if a.stage == "auto":
+        stage_auto()
+    elif a.stage == "script":
         stage_script()
     elif a.stage == "render":
         stage_render(a.episode)
