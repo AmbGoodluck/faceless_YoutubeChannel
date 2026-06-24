@@ -77,13 +77,23 @@ def upload(out_dir: str, privacy="public") -> str:
                   script.get("youtube_description", "") + DISCLAIMER,
                   script.get("hashtags", []), privacy)
     thumb = os.path.join(out_dir, "thumbnail.jpg")
-    if os.path.exists(thumb):
-        try:
-            yt.thumbnails().set(videoId=vid,
-                media_body=googleapiclient.http.MediaFileUpload(thumb)).execute()
-            print("[youtube] thumbnail set")
-        except Exception as e:
-            print(f"[youtube] thumbnail skipped: {e}")
+    if not os.path.exists(thumb):
+        print("[youtube] WARNING: no thumbnail.jpg found — published without a custom thumbnail!")
+    else:
+        import time as _t
+        for attempt in range(3):
+            try:
+                yt.thumbnails().set(videoId=vid,
+                    media_body=googleapiclient.http.MediaFileUpload(thumb)).execute()
+                print("[youtube] thumbnail set")
+                break
+            except Exception as e:
+                print(f"[youtube] thumbnail set failed (try {attempt+1}/3): {e}")
+                _t.sleep(5)
+        else:
+            print("[youtube] WARNING: could not set custom thumbnail after 3 tries. "
+                  "Custom thumbnails require a VERIFIED channel — verify once at "
+                  "https://www.youtube.com/verify, then re-run set_thumbnails.py.")
     print(f"[youtube] uploaded https://youtu.be/{vid}")
     return vid
 

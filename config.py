@@ -43,8 +43,10 @@ GEMINI_ENDPOINT = (
 # Serialized story arcs: one 6-8 min episode per day, 10 episodes per story,
 # then a brand-new story starts the next day.
 EPISODES_PER_STORY = 10
-EPISODE_WORDS = (260, 420)     # ~1.5-2.5 min premium episodes (Gen-Z attention + cost)
-SCENES_PER_VIDEO = 14          # distinct cinematic shots across the episode
+# ~6-8 min episodes. Narration is read slightly slowed (~138 wpm), plus pauses
+# between screenplay lines, so 900-1150 spoken words lands around 6.5-8.5 min.
+EPISODE_WORDS = (900, 1150)
+SCENES_PER_VIDEO = 22          # distinct cinematic shots so a 7-min episode never feels static
 
 # ---------------------------------------------------------------- Voice (Edge TTS, FREE)
 # List voices with:  edge-tts --list-voices | grep en-

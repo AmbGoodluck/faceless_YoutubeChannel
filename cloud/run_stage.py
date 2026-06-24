@@ -133,31 +133,58 @@ def stage_publish(slug):
     print(f"::notice::published {slug}")
 
 
+RENDER_TRIES = 3
+RENDER_WAIT = 120          # seconds to wait before re-trying a failed render
+
+
 def stage_auto():
     """Fully automatic: generate -> render -> publish to YouTube, no approval gate.
-    Runs end-to-end in ONE Actions job. Uploads the full video to YouTube (cast
-    thumbnail + fiction/AI disclaimer); cuts 3 vertical clips to Drive for TikTok.
-    Uploads ONLY the full video (no separate Short) to stay under the daily quota."""
+
+    NO-SKIP GUARANTEE: the episode counter is advanced ONLY after the episode is
+    fully published with a thumbnail. If the render or upload fails, we retry the
+    SAME episode (after a wait) and never move on — so episodes can't be skipped.
+    Every published episode is guaranteed to carry a thumbnail."""
+    import time
     from src import story
     spec = story.next_episode_spec()
-    data = generate_script.generate_episode(spec)
-    story.save_recap(data.get("recap_for_next", ""))   # advance the episode counter
+    data = generate_script.generate_episode(spec)       # gen_json retries internally
     slug = data["slug"]; out = _dir(slug)
     _save_state(slug, {"slug": slug, "id": data["id"]})
 
-    # render (free stills pipeline): multi-voice + cinematic images + ffmpeg + thumbnail
-    generate_voice.make_voice(out, data.get("voice_map", {}))
-    generate_visuals.make_visuals(data["scene_prompts"], out)
-    render_video.render(out)
-    make_thumbnail.make(out)
+    final = os.path.join(out, "final.mp4")
+    thumb = os.path.join(out, "thumbnail.jpg")
 
-    # publish the full episode to YouTube
+    # ---- render + thumbnail, with retries; do NOT advance the counter unless this works
+    last = None
+    for attempt in range(1, RENDER_TRIES + 1):
+        try:
+            generate_voice.make_voice(out, data.get("voice_map", {}))
+            generate_visuals.make_visuals(data["scene_prompts"], out)
+            render_video.render(out)
+            make_thumbnail.make(out)
+            if not os.path.exists(final):
+                raise RuntimeError("final.mp4 missing after render")
+            if not os.path.exists(thumb):                       # thumbnail is mandatory
+                raise RuntimeError("thumbnail.jpg missing after render")
+            break
+        except Exception as e:
+            last = e
+            print(f"[auto] render attempt {attempt}/{RENDER_TRIES} failed for {slug}: {e}")
+            if attempt < RENDER_TRIES:
+                print(f"[auto] waiting {RENDER_WAIT}s then retrying (NOT advancing episode)")
+                time.sleep(RENDER_WAIT)
+    else:
+        # every attempt failed -> raise so the counter stays put; the next run retries THIS episode
+        raise RuntimeError(f"render failed for {slug} after {RENDER_TRIES} tries: {last}")
+
+    # ---- publish the full episode (thumbnail guaranteed to exist on disk)
     yt = upload_youtube.upload(out)                      # full video + thumbnail + disclaimer
+    _save_state(slug, {"slug": slug, "id": data["id"], "youtube": yt})
 
-    # cut vertical teaser clips and stash them in Drive for manual TikTok posting
+    # ---- clips to Drive (best-effort; does not gate the episode)
     clip_links = []
     try:
-        clip_for_tiktok.clip_video(os.path.join(out, "final.mp4"))
+        clip_for_tiktok.clip_video(final)
         folder = upload_drive.ensure_folder(slug, ROOT_FOLDER)
         for clip in sorted(glob.glob(os.path.join(out, "tiktok_part*.mp4"))):
             up = upload_drive.upload(clip, folder, os.path.basename(clip))
@@ -165,6 +192,8 @@ def stage_auto():
     except Exception as e:
         print(f"[auto] clip/drive step skipped: {e}")
 
+    # ---- SUCCESS: only now advance the counter so a failed publish never skips an episode
+    story.save_recap(data.get("recap_for_next", ""))
     try:
         rows = _rows(); _set_status(rows, data.get("id", slug), "posted")
     except Exception:
@@ -178,13 +207,44 @@ def stage_auto():
     print(f"::notice::auto-published {slug} -> https://youtu.be/{yt}")
 
 
+def stage_reset():
+    """Wipe the serialized-story counter so the next run starts a brand-new Story 1
+    from Episode 1. (Old outputs/ dirs are left alone — they're harmless.)"""
+    import src.story as story
+    if os.path.exists(story.STATE):
+        os.remove(story.STATE)
+        print(f"[reset] removed {story.STATE} — next episode will be a fresh Story 1, Ep 1")
+    else:
+        print("[reset] no story_state.json — already clean")
+
+
+def stage_backfill(count=None):
+    """Render + publish a whole story IN ORDER in a single run. stage_auto advances
+    the counter only on success, so this can't skip episodes; if one episode fails
+    its retries, the loop STOPS (the next run resumes from the same episode)."""
+    target = int(count) if count else config.EPISODES_PER_STORY
+    done = 0
+    while done < target:
+        print(f"::group::backfill episode {done + 1}/{target}")
+        stage_auto()                 # raises on persistent failure -> loop stops, no skip
+        done += 1
+        print("::endgroup::")
+    print(f"::notice::backfill complete — {done} episode(s) posted in order")
+
+
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("stage", choices=["auto", "script", "render", "publish"])
+    p.add_argument("stage", choices=["auto", "backfill", "reset",
+                                     "script", "render", "publish"])
     p.add_argument("--episode")
+    p.add_argument("--count")
     a = p.parse_args()
     if a.stage == "auto":
         stage_auto()
+    elif a.stage == "backfill":
+        stage_backfill(a.count)
+    elif a.stage == "reset":
+        stage_reset()
     elif a.stage == "script":
         stage_script()
     elif a.stage == "render":
