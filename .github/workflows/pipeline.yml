@@ -2,13 +2,13 @@ name: Lights Out Tales pipeline
 
 on:
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "0 */4 * * *"
   workflow_dispatch:
     inputs:
       stage:
         description: "script | render | publish"
         required: true
-        default: "script"
+        default: "auto"
       episode:
         description: "episode slug (for render/publish)"
         required: false
@@ -40,7 +40,7 @@ jobs:
           FAL_KEY: ${{ secrets.FAL_KEY }}
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
         run: |
-          python cloud/run_stage.py "${{ github.event.inputs.stage || 'script' }}" \
+          python cloud/run_stage.py "${{ github.event.inputs.stage || 'auto' }}" \
             --episode "${{ github.event.inputs.episode }}"
       - name: Commit state
         run: |
