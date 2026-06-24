@@ -1,0 +1,80 @@
+{
+  "story_id": 1,
+  "episode": 1,
+  "bible": {
+    "story_title": "The Replay",
+    "logline": "A high school student discovers she's living the same day over and over, and each loop reveals a darker truth about her classmates and a mysterious countdown she can't stop.",
+    "setting": "Westridge High School, present day; suburban town in autumn",
+    "characters": [
+      {
+        "name": "Maya Chen",
+        "role": "Protagonist; observant senior who notices patterns others miss",
+        "gender": "female"
+      },
+      {
+        "name": "Jordan Price",
+        "role": "Maya's best friend; initially unaware of the loops; becomes suspicious",
+        "gender": "male"
+      },
+      {
+        "name": "Ms. Hartwell",
+        "role": "English teacher; acts strangely familiar with Maya across loops; knows more than she should",
+        "gender": "female"
+      },
+      {
+        "name": "Dev Kapoor",
+        "role": "Quiet student; becomes an unlikely ally; holds a crucial secret",
+        "gender": "male"
+      }
+    ],
+    "episodes": [
+      {
+        "n": 1,
+        "beat": "Maya wakes up to her alarm at 6:47 AM. Normal day at Westridge High until 3:14 PM when the fire alarm blares. Everyone evacuates. At 3:43 PM, Maya is hit by a delivery truck in the parking lot. She dies. She wakes up at 6:47 AM again."
+      },
+      {
+        "n": 2,
+        "beat": "Maya realizes she's living the same day. She tries to avoid the accident but the truck finds her anyway—different time, same outcome. She dies. Loop resets. Maya begins documenting the day's events in meticulous detail."
+      },
+      {
+        "n": 3,
+        "beat": "Maya notices Ms. Hartwell smiling at her knowingly during class—as if she recognizes her. When Maya approaches her after class to ask if they've met before, Ms. Hartwell says nothing but writes a cryptic message on Maya's hand: '3:14.' Maya dies again at the usual time."
+      },
+      {
+        "n": 4,
+        "beat": "Maya tells Jordan about the loops. He thinks she's joking until she predicts events minutes before they happen. They try to escape town but the truck crashes into them anyway. Jordan dies with her. Maya wakes alone. She becomes desperate and reckless."
+      },
+      {
+        "n": 5,
+        "beat": "Maya finds a pattern: students have been disappearing from the school over the past month—seven names on a missing poster. She notices each was in her year. A countdown appears on her phone: 4 days remaining. Ms. Hartwell appears in the school hallway at odd hours, always watching. Maya discovers Ms. Hartwell's office contains a yearbook from 30 years ago with her photo—same face, same age."
+      },
+      {
+        "n": 6,
+        "beat": "Dev approaches Maya and confesses he's been experiencing strange memories of conversations with her that haven't happened yet. He admits he found a hidden server in the school's basement during detention. They break in together and discover encrypted files labeled with student names and dates. The fire alarm sounds. Maya and Dev barely escape the basement before the door locks. They die anyway."
+      },
+      {
+        "n": 7,
+        "beat": "Maya and Dev coordinate across the loop. Dev decrypts the files: the school is performing a ritual to 'reset' reality, using students as anchors. Ms. Hartwell has been the teacher overseeing it for decades, always the same age. The countdown is for the final ceremony—the fire alarm is the trigger. They discover their names are the last two on the list."
+      },
+      {
+        "n": 8,
+        "beat": "Maya confronts Ms. Hartwell, who finally explains: the school was built on a site where time fractured in 1994. A ceremony was meant to fix it but went wrong, trapping her and 200 students in an endless loop of the same day. Ms. Hartwell has been trying to break it by completing the ritual correctly—the missing students aren't dead, they're being 'reset' into a new timeline. Maya and Dev are the final keys. Ms. Hartwell isn't evil—she's desperate."
+      },
+      {
+        "n": 9,
+        "beat": "Maya realizes Ms. Hartwell's plan will erase her and Dev's existence but save everyone else stuck in the loop, including Jordan. She finds an alternative: if she can interrupt the ceremony and reverse the polarity of the ritual, she might save everyone without sacrifice. Dev helps her plant devices in the school's foundations. The fire alarm sounds. Maya reaches the ritual chamber beneath the school as Ms. Hartwell begins the ceremony."
+      },
+      {
+        "n": 10,
+        "beat": "Maya activates the reversal just as Ms. Hartwell completes the ritual. Reality fractures—the school flashes between states. Maya experiences all 200 loops simultaneously, then everything stops. Maya wakes in her bed at 6:47 AM on a different day—October 15th, not September 15th. She looks outside: months have passed. All the missing students walk the halls, alive and well. Dev finds her with proof the loop is broken. Ms. Hartwell is now an elderly woman—the 30 years finally caught up with her. In the final shot, Maya and Dev watch Ms. Hartwell leave the school for the last time, free."
+      }
+    ],
+    "voice_map": {
+      "MAYA CHEN": "en-US-AriaNeural",
+      "JORDAN PRICE": "en-US-EricNeural",
+      "MS. HARTWELL": "en-US-JennyNeural",
+      "DEV KAPOOR": "en-GB-RyanNeural"
+    }
+  },
+  "last_recap": "Maya Chen lived through Tuesday eleven times, each day ending in someone's death at 3:47 PM. When she tried to ask Dev Kapoor about a mysterious countdown, he warned her to stop asking questions. Now, as the twelfth loop begins, Maya realizes the real horror isn't the truck—it's the possibility that she might never leave Tuesday at all."
+}
