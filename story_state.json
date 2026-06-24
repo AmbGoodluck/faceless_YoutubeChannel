@@ -1,6 +1,6 @@
 {
   "story_id": 1,
-  "episode": 6,
+  "episode": 7,
   "bible": {
     "story_title": "The Glitch in the Glass",
     "logline": "A group of friends discovers their antique mirror shows a subtly altered, increasingly sinister reflection of their world, threatening to trap them in its distorted reality.",
@@ -76,5 +76,5 @@
       "SAM": "en-GB-RyanNeural"
     }
   },
-  "last_recap": "Liam's reflection in the mirror tapped on the glass, attempting to communicate. The friends felt an increasing, almost physical pull towards the mirror, their reality seeming to weaken as the reflected world became more tangible."
+  "last_recap": "Maya's reflection, initially mimicking her perfectly, deviated to show extreme terror and pleaded silently from within the mirror, suggesting it was trapped and wanted to swap places with Maya."
 }

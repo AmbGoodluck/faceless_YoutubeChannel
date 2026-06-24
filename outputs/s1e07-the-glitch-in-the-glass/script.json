@@ -1,0 +1,139 @@
+{
+  "lines": [
+    {
+      "speaker": "Narrator",
+      "text": "Previously, Liam’s reflection had tapped on the glass, a desperate attempt to communicate. The friends felt the mirror’s pull, its distorted reality becoming unsettlingly tangible. They stood before it again, the air thick with apprehension."
+    },
+    {
+      "speaker": "Liam",
+      "text": "Are we sure about this? It feels… stronger today."
+    },
+    {
+      "speaker": "Chloe",
+      "text": "We need to know what it wants. We can’t just ignore it now."
+    },
+    {
+      "speaker": "Sam",
+      "text": "I’ve been digging online. There are old folklore tales about 'mirror selves' – reflections that gain sentience and try to swap places. They call it the 'Glass Swap'."
+    },
+    {
+      "speaker": "Maya",
+      "text": "Swap places? That’s… that’s what Liam’s reflection was doing, wasn’t it? Trying to get out."
+    },
+    {
+      "speaker": "Narrator",
+      "text": "Maya stepped forward, drawn by an unseen force. Her reflection in the antique glass mimicked her perfectly, a flawless echo of her movements. For a few tense seconds, they were indistinguishable."
+    },
+    {
+      "speaker": "Liam",
+      "text": "It’s doing it again. Just like before."
+    },
+    {
+      "speaker": "Chloe",
+      "text": "Look closely. There’s something… off."
+    },
+    {
+      "speaker": "Narrator",
+      "text": "Then, the reflection's movements diverged. A slight hesitation in its smile, a subtle shift in its posture. Its eyes, Maya’s eyes, widened slightly, a flicker of raw, undisguised terror in their depths. It pressed a ghostly hand against the glass, not mimicking Maya’s touch, but as if trying to reach *out*."
+    },
+    {
+      "speaker": "Sam",
+      "text": "It’s not just mimicking anymore. It’s… reacting."
+    },
+    {
+      "speaker": "Maya",
+      "text": "It’s not me. It’s not me. Get me away from this thing!"
+    },
+    {
+      "speaker": "Narrator",
+      "text": "The reflected Maya’s face contorted, her lips forming silent, desperate pleas. Her reflection pounded softly on the inside of the glass, a frantic, rhythmic plea for release. Her real hands flew to her face, shielding her eyes from the horror staring back. The room seemed to twist, the air growing heavy and cold around them. The reflection’s gaze was fixed, not on Maya, but past her, as if seeing something else entirely."
+    },
+    {
+      "speaker": "Chloe",
+      "text": "It’s begging. It wants out. And it looks… terrified."
+    },
+    {
+      "speaker": "Liam",
+      "text": "Terrified of what? Of us? Or of… something else in there with it?"
+    },
+    {
+      "speaker": "Narrator",
+      "text": "The reflected Maya’s eyes, wide and wet, darted nervously to the side, then back to the group. A profound, bone-chilling fear emanated from the glass, not from Maya, but from her imprisoned counterpart. The mirror pulsed with an unseen energy, the reflection’s pleas becoming more desperate, its eyes locking onto Maya’s, begging for an answer only she could give."
+    }
+  ],
+  "scene_prompts": [
+    {
+      "prompt": "WIDE SHOT, looking down a dimly lit attic corridor towards the mirror. Maya, Liam, Chloe, and Sam stand cautiously a few feet from the large, ornate antique mirror, framed by cobweb-draped furniture. Dusty shafts of moonlight cut through the gloom from a distant window, highlighting the dust motes. A sense of foreboding and anticipation. Desaturated, cool tones."
+    },
+    {
+      "prompt": "MEDIUM SHOT, focused on Liam's face. His brow is furrowed with concern, eyes darting between the mirror and his friends. Shadows deepen the lines around his eyes. A single, motivated rim light catches his profile from the left. Anxious, hesitant emotion. Muted blue-grey palette."
+    },
+    {
+      "prompt": "CLOSE-UP on Chloe's eyes. They are wide, analytical, but with a flicker of intuition, peering intently at the mirror (out of frame). The soft glow of the mirror's surface is subtly reflected in her pupils. Intense concentration, mild apprehension. Cool, almost sterile lighting."
+    },
+    {
+      "prompt": "OVER THE SHOULDER SHOT of Sam, looking towards the mirror. His hand holds a smartphone, its screen a subtle, cool glow against his chest. His posture is slightly hunched, suggesting deep thought and a hint of unease. The mirror's dark frame is visible in the background, out of focus. Curious, analytical emotion. Dusky blues and greys."
+    },
+    {
+      "prompt": "MEDIUM SHOT, Maya in profile, looking at her reflection. The real Maya is in sharp focus in the midground, with her reflection slightly less defined but clearly visible in the foreground mirror. Her expression is a mix of dread and morbid fascination. A single, harsh light from above casts stark shadows on her features. Drained, fearful emotion. Desaturated, almost monochromatic."
+    },
+    {
+      "prompt": "CLOSE-UP, Maya’s hands slowly reaching towards the mirror. Her reflection's hands perfectly mirror hers, inches from touching the glass. The antique frame of the mirror provides leading lines towards their converging hands. Tense, magnetic, with a feeling of inevitability. Cool, ambient light."
+    },
+    {
+      "prompt": "TWO SHOT, Maya and Liam. Maya's face is pale, eyes fixed on the mirror. Liam is beside her, his hand subtly reaching out as if to stop her, but hesitating. The reflection of Maya in the mirror is visible between them, almost as a third character. Palpable tension, growing dread. Cold, distant lighting."
+    },
+    {
+      "prompt": "MEDIUM CLOSE-UP, Chloe's face. Her eyes narrow slightly, noticing a subtle, wrong detail in the reflection. A faint, almost imperceptible shadow passes across her face. Growing suspicion, unease. Dim, atmospheric lighting."
+    },
+    {
+      "prompt": "EXTREME CLOSE-UP on the reflection of Maya's eyes. Initially mirroring Maya's, they suddenly widen, a spark of raw terror appearing. The reflection of the dusty attic is visible in the background of her pupils, distorted. Unsettling, profound fear. Dark, shadowy, with pinpricks of light in the eyes."
+    },
+    {
+      "prompt": "CLOSE-UP of the reflected Maya's hand pressing against the glass. The glass is slightly distorted around the hand, implying pressure. A faint, ethereal glow emanates from the reflection's side of the glass. Desperate, trapped emotion. Eerie, unnatural light sources."
+    },
+    {
+      "prompt": "MEDIUM SHOT, Maya recoiling, her hands flying to cover her face. Her back is to the camera, but her posture conveys shock and fear. The mirror is a bright, almost blinding rectangle in the background, with the pleading reflection vaguely visible. Sudden terror, desperation. Contrasting light, with Maya in shadow and the mirror bright."
+    },
+    {
+      "prompt": "TWO SHOT, Chloe and Liam. Chloe's expression is one of shocked realization, while Liam's is grim and disturbed. They are looking past Maya (out of frame) at the mirror. A strong sense of impending danger. Desaturated, heavy atmosphere."
+    },
+    {
+      "prompt": "MEDIUM SHOT, the reflected Maya's face, distorted by the glass. Her mouth is open in a silent scream, her eyes wide with terror, darting to the side as if watching something unseen within her world. The antique frame of the mirror provides a menacing border. Trapped, panicked, profound dread. Distorted, sickly greenish-yellow light on the reflection."
+    },
+    {
+      "prompt": "CLOSE-UP on the mirror's surface. The reflection's eyes, brimming with tears and fear, lock directly onto the camera, begging. The glass itself appears to pulse subtly with a faint, internal light. Intense, direct appeal, a final desperate plea. Dark, isolating, with the eyes as the only source of focused light."
+    }
+  ],
+  "youtube_title": "The Glitch in the Glass — Ep 7: Trapped in the Reflection",
+  "youtube_description": "The mirror's grip tightens as Maya's reflection pleads for freedom. What terrifying secret does the 'Glass Swap' hold? Subscribe for more episodes of this original horror series!",
+  "hashtags": [
+    "TheGlitchInTheGlass",
+    "HorrorStory",
+    "PsychologicalHorror",
+    "MirrorHorror",
+    "CreepyReflection",
+    "Supernatural",
+    "FoundFootage",
+    "AnalogHorror",
+    "ShortFilm",
+    "Mystery",
+    "GroundedHorror",
+    "ScaryStories"
+  ],
+  "tiktok_caption": "Maya’s reflection isn’t just mimicking anymore. It’s begging to be let out, and it looks terrified. What is in there with it? 😨 #TheGlitchInTheGlass #HorrorTok",
+  "thumbnail_text": "TRAPPED. BEGGING.",
+  "pinned_comment": "If you were Maya, would you try to help your reflection, or run away from the mirror forever?",
+  "recap_for_next": "Maya's reflection, initially mimicking her perfectly, deviated to show extreme terror and pleaded silently from within the mirror, suggesting it was trapped and wanted to swap places with Maya.",
+  "poster_prompt": "A landscape 16:9 movie poster of Maya, Chloe, Liam, and Sam, faces clearly visible, expressions of intense fear and confusion, looking directly towards the camera. Maya is slightly in front, her eyes wide with dawning horror, one hand faintly visible reaching towards an unseen, distorted mirror reflection that subtly overlaps the corner of the frame. Dramatic, deep shadows and cold blue lighting with stark highlights on their faces. Cinematic, photoreal, no on-screen text.",
+  "narration": "Previously, Liam’s reflection had tapped on the glass, a desperate attempt to communicate. The friends felt the mirror’s pull, its distorted reality becoming unsettlingly tangible. They stood before it again, the air thick with apprehension. Are we sure about this? It feels… stronger today. We need to know what it wants. We can’t just ignore it now. I’ve been digging online. There are old folklore tales about 'mirror selves' – reflections that gain sentience and try to swap places. They call it the 'Glass Swap'. Swap places? That’s… that’s what Liam’s reflection was doing, wasn’t it? Trying to get out. Maya stepped forward, drawn by an unseen force. Her reflection in the antique glass mimicked her perfectly, a flawless echo of her movements. For a few tense seconds, they were indistinguishable. It’s doing it again. Just like before. Look closely. There’s something… off. Then, the reflection's movements diverged. A slight hesitation in its smile, a subtle shift in its posture. Its eyes, Maya’s eyes, widened slightly, a flicker of raw, undisguised terror in their depths. It pressed a ghostly hand against the glass, not mimicking Maya’s touch, but as if trying to reach *out*. It’s not just mimicking anymore. It’s… reacting. It’s not me. It’s not me. Get me away from this thing! The reflected Maya’s face contorted, her lips forming silent, desperate pleas. Her reflection pounded softly on the inside of the glass, a frantic, rhythmic plea for release. Her real hands flew to her face, shielding her eyes from the horror staring back. The room seemed to twist, the air growing heavy and cold around them. The reflection’s gaze was fixed, not on Maya, but past her, as if seeing something else entirely. It’s begging. It wants out. And it looks… terrified. Terrified of what? Of us? Or of… something else in there with it? The reflected Maya’s eyes, wide and wet, darted nervously to the side, then back to the group. A profound, bone-chilling fear emanated from the glass, not from Maya, but from her imprisoned counterpart. The mirror pulsed with an unseen energy, the reflection’s pleas becoming more desperate, its eyes locking onto Maya’s, begging for an answer only she could give.",
+  "voice_map": {
+    "MAYA": "en-US-AriaNeural",
+    "LIAM": "en-US-EricNeural",
+    "CHLOE": "en-US-JennyNeural",
+    "SAM": "en-GB-RyanNeural"
+  },
+  "id": "1.7",
+  "title": "The Glitch in the Glass — Ep 7: Trapped in the Reflection",
+  "slug": "s1e07-the-glitch-in-the-glass"
+}
