@@ -75,18 +75,23 @@ LIPSYNC_MODELS = {
 }
 
 MOTION_MODELS = {
-    "wan":      "wavespeed-ai/wan-2.1-i2v-480p",  # best motion coherence  ~$0.02/run
-    "cogvideo": "zsxkib/cogvideox-5b",             # good scene coherence   ~$0.01/run
-    "ltx":      "lightricks/ltx-video",            # fastest                ~$0.005/run
-    "hunyuan":  "tencent/hunyuan-video",           # highest quality        ~$0.05/run
+    "wan720":   "wavespeed-ai/wan-2.1-i2v-720p",  # 720p — best body movement  ~$0.25/sec
+    "wan480":   "wavespeed-ai/wan-2.1-i2v-480p",  # 480p fallback              ~$0.09/sec
+    "cogvideo": "zsxkib/cogvideox-5b",             # good scene coherence       ~$0.01/run
+    "ltx":      "lightricks/ltx-video",            # fast, great slow cam       ~$0.048/run
+    "hunyuan":  "tencent/hunyuan-video",           # highest quality            ~$0.05/run
 }
 
-# Waterfall order: cheapest/fastest first, most expensive last, Ken-Burns as final fallback.
-# The pipeline tries each in sequence — stops as soon as one succeeds.
+# TWO separate waterfalls — action and establishing/ambient are different problems.
 #
-#  LTX  →  CogVideoX  →  Wan2.1  →  Hunyuan  →  Ken-Burns (free, FFmpeg)
+# ACTION shots need real body movement → Wan 720p first (best motion), then 480p,
+# then CogVideoX, then LTX, then Ken-Burns.
 #
-MOTION_WATERFALL = ["ltx", "cogvideo", "wan", "hunyuan"]
+# ESTABLISHING / AMBIENT shots just need a slow cinematic push or subtle motion →
+# LTX first (cheap + good slow cam), then CogVideoX, then Wan 480p, then Ken-Burns.
+#
+ACTION_WATERFALL      = ["wan720", "wan480", "cogvideo", "ltx", "hunyuan"]
+ESTABLISHING_WATERFALL = ["ltx", "cogvideo", "wan480", "hunyuan"]
 
 REPLICATE_API = "https://api.replicate.com/v1"
 
@@ -247,6 +252,35 @@ def _get_character_audio(shot_id: int, out_dir: str) -> str | None:
     return char_audio_path
 
 
+# ── Cinematic prompt builder ──────────────────────────────────────────────────
+
+def _cinematic_prompt(base_prompt: str, shot_class: str) -> str:
+    """
+    Wrap the base shot prompt with cinematic motion language.
+    Specific, vivid motion instructions produce far better body movement
+    than generic prompts — this is the single biggest quality lever.
+    """
+    action_prefix = (
+        "Cinematic film shot. Full body movement. Natural human motion. "
+        "Characters move realistically — arms, legs, torso, weight shifts. "
+        "Fluid motion, not stiff. Camera handheld slightly. "
+    )
+    establishing_prefix = (
+        "Cinematic establishing shot. Slow, smooth camera push-in. "
+        "Environmental atmosphere. Subtle environmental motion — "
+        "leaves, smoke, dust, light flicker. Film grain. "
+    )
+    suffix = (
+        " Shot on ARRI Alexa. Anamorphic lens. "
+        "Horror film color grade — deep shadows, desaturated, high contrast. "
+        "Photorealistic. 24fps."
+    )
+
+    prefix = action_prefix if shot_class == "action" else establishing_prefix
+    core   = base_prompt[:200] if base_prompt else ""
+    return f"{prefix}{core}{suffix}"
+
+
 # ── Motion input builders (each model uses different field names) ─────────────
 
 def _motion_inputs(model_key: str, image_path: str, prompt: str,
@@ -279,13 +313,23 @@ def _motion_inputs(model_key: str, image_path: str, prompt: str,
             "fps":             8,
         }
 
-    if model_key == "wan":
-        # Wan2.1 480p: best motion coherence, higher cost
+    if model_key == "wan720":
+        # Wan2.1 720p: best body movement, highest motion quality
+        return {
+            "image":           b64_img,
+            "prompt":          prompt,
+            "num_frames":      min(num_frames, 81),  # 720p max ~81 frames
+            "sample_steps":    30,                   # more steps = better movement
+            "fps":             24,
+        }
+
+    if model_key == "wan480":
+        # Wan2.1 480p: good body movement at lower cost
         return {
             "image":           b64_img,
             "prompt":          prompt,
             "num_frames":      num_frames,
-            "sample_steps":    20,
+            "sample_steps":    25,
             "fps":             16,
         }
 
@@ -317,11 +361,11 @@ class LipSyncRenderer(PollinationsRenderer):
         self.lipsync_model_key = (
             lipsync_model
             or os.environ.get("LIPSYNC_MODEL")
-            or getattr(config, "LIPSYNC_MODEL", "sadtalker")
+            or getattr(config, "LIPSYNC_MODEL", "latentsync")  # sharpest lip movement
         )
         if self.lipsync_model_key not in LIPSYNC_MODELS:
-            print(f"[lipsync] unknown model '{self.lipsync_model_key}', using sadtalker")
-            self.lipsync_model_key = "sadtalker"
+            print(f"[lipsync] unknown model '{self.lipsync_model_key}', using latentsync")
+            self.lipsync_model_key = "latentsync"
 
     @property
     def supports_video(self) -> bool:
@@ -366,7 +410,7 @@ class LipSyncRenderer(PollinationsRenderer):
         elif shot_class in ("action", "establishing"):
             return self._render_motion(
                 shot_id, image_path, prompt, out_dir, out_path,
-                seconds=duration_sec)
+                seconds=duration_sec, shot_class=shot_class)
 
         else:
             # ambient / insert — Ken-Burns (free)
@@ -453,11 +497,11 @@ class LipSyncRenderer(PollinationsRenderer):
     def _run_latentsync(self, token: str, model_id: str,
                         image_path: str, audio_path: str) -> str:
         return _replicate_run(token, model_id, {
-            "video":          _b64(image_path, "image/jpeg"),  # accepts image as source
-            "audio":          _b64(audio_path, "audio/mpeg"),
-            "guidance_scale": 2.0,
-            "inference_steps": 20,
-        }, timeout_min=12)
+            "video":           _b64(image_path, "image/jpeg"),  # accepts image as source
+            "audio":           _b64(audio_path, "audio/mpeg"),
+            "guidance_scale":  2.5,   # slightly higher = sharper lip adherence
+            "inference_steps": 40,    # more steps = more accurate lip shape
+        }, timeout_min=15)
 
     def _run_wav2lip(self, token: str, model_id: str,
                      image_path: str, audio_path: str) -> str:
@@ -472,42 +516,40 @@ class LipSyncRenderer(PollinationsRenderer):
     # ── Motion path (waterfall) ───────────────────────────────────────────────
 
     def _render_motion(self, shot_id: int, image_path: str, prompt: str,
-                       out_dir: str, out_path: str, seconds: float = 4.0) -> str:
+                       out_dir: str, out_path: str, seconds: float = 4.0,
+                       shot_class: str = "action") -> str:
         """
-        Image-to-video waterfall for action / establishing / ambient shots.
+        Image-to-video waterfall for action / establishing shots.
 
-        Tries each model in MOTION_WATERFALL order — cheapest first.
-        Falls through to the next on any failure (API error, timeout, bad output).
-        Ken-Burns (free FFmpeg) is the guaranteed final fallback.
+        ACTION shots use ACTION_WATERFALL — Wan 720p first for full body movement.
+        ESTABLISHING shots use ESTABLISHING_WATERFALL — LTX first for slow camera.
 
-        Order:  LTX (~$0.005)  →  CogVideoX (~$0.01)  →  Wan2.1 (~$0.02)
-                →  Hunyuan (~$0.05)  →  Ken-Burns (free)
+        Falls through each model on failure; Ken-Burns is the guaranteed free fallback.
         """
-        token  = self._get_token()
-        motion = getattr(config, "AI_MOTION",
-                         "slow cinematic camera push, eerie horror atmosphere")
-        full_prompt = f"{motion}. {prompt[:150]}" if prompt else motion
+        token = self._get_token()
+
+        # Build a cinematic prompt tailored to the shot class
+        full_prompt = _cinematic_prompt(prompt, shot_class)
         num_frames  = max(33, int(seconds * 16))
 
-        for model_key in MOTION_WATERFALL:
+        waterfall = ACTION_WATERFALL if shot_class == "action" else ESTABLISHING_WATERFALL
+
+        for model_key in waterfall:
             model_id = MOTION_MODELS[model_key]
-            print(f"[motion] shot {shot_id} trying {model_key} ({model_id})...")
+            print(f"[motion] shot {shot_id} [{shot_class}] trying {model_key}...")
             try:
-                inputs  = _motion_inputs(model_key, image_path, full_prompt,
-                                         num_frames, seconds)
-                video_url = _replicate_run(token, model_id, inputs, timeout_min=15)
+                inputs    = _motion_inputs(model_key, image_path, full_prompt,
+                                           num_frames, seconds)
+                video_url = _replicate_run(token, model_id, inputs, timeout_min=20)
                 _download(video_url, out_path)
                 db.update_shot(shot_id, video_path=out_path, render_status="video_done")
                 db.log_render(shot_id, f"{self.name}/{model_key}", 1, "success", out_path)
-                print(f"[motion] shot {shot_id} {model_key} -> {out_path}")
+                print(f"[motion] shot {shot_id} {model_key} ✓ → {out_path}")
                 return out_path
             except Exception as e:
-                print(f"[motion] shot {shot_id} {model_key} failed: {e}")
-                next_idx = MOTION_WATERFALL.index(model_key) + 1
-                if next_idx < len(MOTION_WATERFALL):
-                    print(f"[motion]   → trying {MOTION_WATERFALL[next_idx]}...")
-                else:
-                    print(f"[motion]   → all models exhausted, using Ken-Burns (free)")
+                next_idx = waterfall.index(model_key) + 1
+                nxt = waterfall[next_idx] if next_idx < len(waterfall) else "Ken-Burns"
+                print(f"[motion] shot {shot_id} {model_key} failed ({e}) → trying {nxt}")
 
         # All Replicate models failed — guaranteed free fallback
         print(f"[motion] shot {shot_id} Ken-Burns fallback (free)")
