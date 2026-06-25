@@ -31,7 +31,7 @@ import os, sys, json, argparse, subprocess
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from amadu_studios.database import db
 from amadu_studios.agents import producer, director, writer, cinematographer, lighting
-from amadu_studios.agents import state_engine, vision_qa
+from amadu_studios.agents import state_engine, vision_qa, timeline
 from amadu_studios.renderers.base import get_renderer
 from amadu_studios.continuity import supervisor
 import config
@@ -89,9 +89,14 @@ def cmd_part(prod_id: int, part_num: int):
     print(f"\n[run] Stage 2/6 — Writer (Screenplay)...")
     lines = writer.run(prod_id, ep_id, part_num)
 
-    # 3. Voice
+    # 3. Voice — generate BEFORE video so audio lengths drive shot durations
     print(f"\n[run] Stage 3/6 — Audio (Voice)...")
     voice_path = _generate_voice(ep_id, out_dir)
+
+    # 3b. Dialogue Timeline — map shots to dialogue + measure audio durations
+    print(f"\n[run] Stage 3b — Dialogue Timeline...")
+    shot_timeline = timeline.build_timeline(ep_id, out_dir, prod_id=prod_id)
+    timeline.print_timeline(shot_timeline)
 
     # 4. Cinematographer + Lighting → shots in DB → Renderer
     print(f"\n[run] Stage 4/6 — Cinematographer + Lighting + Renderer...")
@@ -173,25 +178,31 @@ def cmd_part(prod_id: int, part_num: int):
             # Wide shots use the location's seed for environmental consistency.
             seed = vision_qa.resolve_seed(spec["shot_type"], char_ids, loc_id, shot_id)
 
+            # ── Get duration from timeline (audio-driven for dialogue shots) ──
+            tl_entry = shot_timeline.get(shot_id, {})
+            shot_duration = tl_entry.get("duration_sec", 5.0)
+
             try:
                 img_path = renderer.render_image(shot_id, prompt, out_dir, seed=seed)
 
                 # ── LAYER 3: Vision QA ────────────────────────────────────────
                 vqa = vision_qa.check_image(shot_id, img_path)
                 if vqa["passed"]:
-                    # Register canonical portraits / location anchors on first good render
                     vision_qa.register_reference_image(
                         shot_id, char_ids, loc_id, spec["shot_type"], img_path)
 
                 if renderer.supports_video:
-                    renderer.render_video(shot_id, img_path, prompt, out_dir)
+                    # Pass audio-driven duration — dialogue shots match voice exactly
+                    renderer.render_video(shot_id, img_path, prompt, out_dir,
+                                          seconds=shot_duration)
 
                 shot_count += 1
 
             except Exception as e:
                 print(f"[run] render failed for shot {shot_id}: {e}")
                 db.update_shot(shot_id, render_status="render_failed")
-                failed_shots.append((shot_id, prompt, out_dir, char_ids, loc_id, spec["shot_type"]))
+                failed_shots.append((shot_id, prompt, out_dir, char_ids, loc_id,
+                                     spec["shot_type"], shot_duration))
 
         # ── LAYER 4: State engine — update states AFTER scene completes ──────
         # Infers injuries/fatigue/emotional state from the scene objective and
@@ -207,7 +218,7 @@ def cmd_part(prod_id: int, part_num: int):
     if failed_shots:
         print(f"\n[run] Auto-rerender: {len(failed_shots)} failed shots, retrying...")
         retried = 0
-        for shot_id, prompt, shot_out_dir, char_ids, loc_id, shot_type in failed_shots:
+        for shot_id, prompt, shot_out_dir, char_ids, loc_id, shot_type, shot_dur in failed_shots:
             seed = vision_qa.resolve_seed(shot_type, char_ids, loc_id, shot_id)
             try:
                 img_path = renderer.render_image(shot_id, prompt, shot_out_dir, seed=seed)
@@ -216,7 +227,8 @@ def cmd_part(prod_id: int, part_num: int):
                     vision_qa.register_reference_image(
                         shot_id, char_ids, loc_id, shot_type, img_path)
                 if renderer.supports_video:
-                    renderer.render_video(shot_id, img_path, prompt, shot_out_dir)
+                    renderer.render_video(shot_id, img_path, prompt, shot_out_dir,
+                                          seconds=shot_dur)
                 shot_count += 1
                 retried += 1
             except Exception as e:
@@ -232,9 +244,9 @@ def cmd_part(prod_id: int, part_num: int):
     if results["failed"] > 0:
         print(f"[run] WARNING: {results['failed']} shots failed continuity")
 
-    # 6. FFmpeg assembly
-    print(f"\n[run] Stage 6/6 — Editor (FFmpeg assembly)...")
-    final = _assemble(ep_id, prod_id, part_num, out_dir)
+    # 6. Two-pass assembly: shots → scene.mp4 → episode.mp4
+    print(f"\n[run] Stage 6/6 — Editor (scene → episode assembly)...")
+    final = _assemble_episode(ep_id, prod_id, part_num, out_dir, voice_path)
 
     ep_data = db.get_episode(prod_id, part_num)
     print(f"\n{'='*60}")
@@ -297,101 +309,215 @@ def _generate_voice(ep_id: int, out_dir: str) -> str:
     return voice_path
 
 
-# ── FFmpeg assembly ───────────────────────────────────────────────────────────
+# ── FFmpeg helpers ────────────────────────────────────────────────────────────
 
-def _assemble(ep_id: int, prod_id: int, part_num: int, out_dir: str) -> str:
-    shots = db.get_all_shots_for_episode(ep_id)
-    voice_path = os.path.join(out_dir, "voice.mp3")
-    final_path = os.path.join(out_dir, "final.mp4")
+def _ffmpeg_concat_cut(clips: list[str], out: str, W: int, H: int, fps: int):
+    """
+    Join clips with hard cuts (no crossfade). Used inside scene assembly.
+    Each clip is re-scaled to W×H before joining.
+    """
+    import subprocess as sp
+    if len(clips) == 1:
+        sp.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                "-i", clips[0],
+                "-vf", f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}",
+                "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), "-an", out],
+               check=True)
+        return
+
+    concat_txt = out + "_concat.txt"
+    # Re-encode each clip to exact WxH first
+    normed = []
+    for i, src in enumerate(clips):
+        n = out + f"_n{i}.mp4"
+        sp.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                "-i", src,
+                "-vf", f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}",
+                "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), "-an", n],
+               check=True)
+        normed.append(n)
+    with open(concat_txt, "w") as f:
+        for n in normed:
+            f.write(f"file '{os.path.abspath(n)}'\n")
+    sp.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+            "-f", "concat", "-safe", "0", "-i", concat_txt,
+            "-c", "copy", out], check=True)
+    for n in normed:
+        try: os.remove(n)
+        except OSError: pass
+    try: os.remove(concat_txt)
+    except OSError: pass
+
+
+def _ffmpeg_crossfade_join(clips: list[str], out: str, W: int, H: int,
+                           fps: int, xfade: float = 0.4):
+    """
+    Join clips with xfade dissolves. Used between scenes in episode assembly.
+    Falls back to hard cut if only one clip or xfade filter fails.
+    """
+    import subprocess as sp
+    if len(clips) == 1:
+        import shutil; shutil.copy(clips[0], out); return
+
+    # Re-encode all to same spec first
+    normed = []
+    for i, src in enumerate(clips):
+        n = out + f"_xn{i}.mp4"
+        sp.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                "-i", src,
+                "-vf", f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}",
+                "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), "-an", n],
+               check=True)
+        normed.append(n)
+
+    # Measure each clip duration for offset calculation
+    durations = []
+    for n in normed:
+        d = subprocess.check_output([
+            "ffprobe", "-v", "error", "-show_entries", "format=duration",
+            "-of", "default=nk=1:nw=1", n], stderr=subprocess.DEVNULL)
+        durations.append(float(d.strip()))
+
+    inputs = []
+    for n in normed:
+        inputs += ["-i", n]
+
+    fc, prev, offset = [], "0:v", 0.0
+    for k in range(1, len(normed)):
+        offset += durations[k-1] - xfade
+        lbl = f"xv{k}"
+        fc.append(f"[{prev}][{k}:v]xfade=transition=fade"
+                  f":duration={xfade:.2f}:offset={offset:.2f}[{lbl}]")
+        prev = lbl
+
+    grade = config.FILM_GRADE
+    fc.append(f"[{prev}]{grade}[vout]")
+
+    try:
+        sp.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                *inputs, "-filter_complex", ";".join(fc),
+                "-map", "[vout]", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                "-r", str(fps), out], check=True)
+    except sp.CalledProcessError:
+        # Fallback: simple concat with grade
+        concat_txt = out + "_fb.txt"
+        with open(concat_txt, "w") as f:
+            for n in normed:
+                f.write(f"file '{os.path.abspath(n)}'\n")
+        tmp = out + "_cat.mp4"
+        sp.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                "-f", "concat", "-safe", "0", "-i", concat_txt, "-c", "copy", tmp], check=True)
+        sp.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                "-i", tmp, "-vf", grade,
+                "-c:v", "libx264", "-pix_fmt", "yuv420p", out], check=True)
+        try: os.remove(tmp)
+        except OSError: pass
+        try: os.remove(concat_txt)
+        except OSError: pass
+
+    for n in normed:
+        try: os.remove(n)
+        except OSError: pass
+
+
+# ── Pass 1: assemble one scene from its shot clips ────────────────────────────
+
+def _assemble_scene(scene: dict, out_dir: str,
+                    W: int, H: int, fps: int) -> str:
+    """
+    Stitch all shot clips for one scene into scene_N.mp4.
+    Uses hard cuts between shots — exactly like a real edit.
+    Falls back to Ken-Burns on any shot that has no video yet.
+    """
+    scene_out = os.path.join(out_dir, f"_scene_{scene['id']:03d}.mp4")
+    if os.path.exists(scene_out):
+        return scene_out
+
+    shots = db.get_shots(scene["id"])
+    clips = []
+    fallback_renderer = get_renderer("stills")   # Ken-Burns for missing clips
+
+    for shot in shots:
+        vid = shot.get("video_path") or ""
+        img = shot.get("image_path") or ""
+        dur = shot.get("duration_sec") or 4.0
+
+        if vid and os.path.exists(vid):
+            clips.append(vid)
+        elif img and os.path.exists(img):
+            try:
+                clip = fallback_renderer.render_video(
+                    shot["id"], img, shot.get("prompt", ""), out_dir,
+                    seconds=int(max(2, dur)))
+                if clip and os.path.exists(clip):
+                    clips.append(clip)
+            except Exception as e:
+                print(f"[editor] Ken-Burns fallback failed shot {shot['id']}: {e}")
+
+    if not clips:
+        print(f"[editor] scene {scene['id']} has no clips — skipping")
+        return ""
+
+    _ffmpeg_concat_cut(clips, scene_out, W, H, fps)
+    print(f"[editor] scene {scene['id']} → {os.path.basename(scene_out)} "
+          f"({len(clips)} shots)")
+    return scene_out
+
+
+# ── Pass 2: join scenes + add dialogue audio + captions → episode ─────────────
+
+def _assemble_episode(ep_id: int, prod_id: int, part_num: int,
+                      out_dir: str, voice_path: str) -> str:
+    """
+    Two-pass assembly:
+      Pass 1 — shots → scene_NNN.mp4 (hard cuts between shots)
+      Pass 2 — scenes → episode (crossfades between scenes + audio + captions)
+
+    This mirrors how Hollywood editors work:
+      - Cuts within a scene for pace
+      - Dissolves between scenes for time/place transitions
+    """
+    import subprocess as sp
+    from src import render_video as rv
 
     if not os.path.exists(voice_path):
         raise RuntimeError("voice.mp3 missing — run voice stage first")
 
-    # Collect rendered clips (prefer .mp4, fallback to Ken-Burns on .jpg)
-    clips = []
-    for shot in shots:
-        vid = shot.get("video_path") or ""
-        img = shot.get("image_path") or ""
-        if vid and os.path.exists(vid):
-            clips.append(vid)
-        elif img and os.path.exists(img):
-            renderer = get_renderer()
-            try:
-                clip = renderer.render_video(shot["id"], img, shot.get("prompt", ""), out_dir)
-                if clip and os.path.exists(clip):
-                    clips.append(clip)
-            except Exception as e:
-                print(f"[assemble] Ken-Burns fallback failed for shot {shot['id']}: {e}")
-
-    if not clips:
-        raise RuntimeError("No clips to assemble — check renderer logs")
-
-    # Import FFmpeg helpers from old pipeline (render_video.py)
-    from src import render_video as rv
-
-    lines = db.get_screenplay(ep_id)
-    narration = " ".join(l["text"] for l in lines if l.get("text"))
-
-    import subprocess as sp
     W, H, fps = config.IMAGE_W, config.IMAGE_H, 30
+    scenes    = db.get_scenes(ep_id)
+    final_path = os.path.join(out_dir, "final.mp4")
 
-    # Get voice duration
-    dur_out = sp.check_output([
+    # ── Pass 1: build per-scene videos ───────────────────────────────────────
+    print("[editor] Pass 1 — assembling scenes from shots...")
+    scene_clips = []
+    for scene in scenes:
+        sc = _assemble_scene(scene, out_dir, W, H, fps)
+        if sc and os.path.exists(sc):
+            scene_clips.append(sc)
+
+    if not scene_clips:
+        raise RuntimeError("No scene clips produced — check renderer logs")
+
+    print(f"[editor] {len(scene_clips)}/{len(scenes)} scenes assembled")
+
+    # ── Pass 2: join scenes with crossfades ───────────────────────────────────
+    print("[editor] Pass 2 — joining scenes into episode...")
+    silent = os.path.join(out_dir, "_episode_silent.mp4")
+    _ffmpeg_crossfade_join(scene_clips, silent, W, H, fps,
+                           xfade=config.CROSSFADE)
+
+    # ── Add dialogue audio + captions ────────────────────────────────────────
+    lines     = db.get_screenplay(ep_id)
+    narration = " ".join(l["text"] for l in lines if l.get("text"))
+    dur_out   = sp.check_output([
         "ffprobe", "-v", "error", "-show_entries", "format=duration",
-        "-of", "default=nk=1:nw=1", voice_path])
+        "-of", "default=nk=1:nw=1", voice_path], stderr=subprocess.DEVNULL)
     total = float(dur_out.strip())
 
-    X = config.CROSSFADE
-    n = len(clips)
-    per = (total + (n - 1) * X) / max(n, 1)
-
-    # Re-encode clips to exact duration
-    parts = []
-    for i, src in enumerate(clips):
-        clip_path = os.path.join(out_dir, f"_enc_{i}.mp4")
-        vf = (f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
-              f"tpad=stop_mode=clone:stop_duration={per:.2f}")
-        sp.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
-                "-i", src, "-vf", vf, "-t", f"{per:.2f}", "-an",
-                "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), clip_path], check=True)
-        parts.append(clip_path)
-
-    # Crossfade chain
-    silent = os.path.join(out_dir, "_silent.mp4")
-    grade  = config.FILM_GRADE
-    inputs = []
-    for p in parts:
-        inputs += ["-i", p]
-    fc, prev = [], "0:v"
-    for k in range(1, n):
-        off = k * (per - X)
-        lbl = f"v{k}"
-        fc.append(f"[{prev}][{k}:v]xfade=transition=fade:duration={X:.2f}:offset={off:.2f}[{lbl}]")
-        prev = lbl
-    fc.append(f"[{prev}]{grade}[vout]")
-    try:
-        sp.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", *inputs,
-                "-filter_complex", ";".join(fc), "-map", "[vout]",
-                "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(fps), silent], check=True)
-    except sp.CalledProcessError:
-        # Fallback: simple concat (no crossfades)
-        concat_txt = os.path.join(out_dir, "_concat.txt")
-        with open(concat_txt, "w") as f:
-            for p in parts:
-                f.write(f"file '{os.path.abspath(p)}'\n")
-        tmp = os.path.join(out_dir, "_cat.mp4")
-        sp.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
-                "-f", "concat", "-safe", "0", "-i", concat_txt, "-c", "copy", tmp], check=True)
-        sp.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
-                "-i", tmp, "-vf", grade, "-c:v", "libx264", "-pix_fmt", "yuv420p", silent],
-               check=True)
-
-    # Burn captions + mix audio
     ass_path = os.path.join(out_dir, "captions.ass")
     rv._even_ass(narration, total, ass_path, W, H)
-    # FFmpeg subtitles filter requires absolute path; on macOS colons in the path
-    # must be escaped as \: — use a separate -vf input file trick to avoid this entirely.
-    abs_ass = os.path.abspath(ass_path).replace("\\", "/").replace(":", "\\:")
+    abs_ass  = os.path.abspath(ass_path).replace("\\", "/").replace(":", "\\:")
+
     try:
         sp.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
                 "-i", silent, "-i", voice_path,
@@ -400,29 +526,21 @@ def _assemble(ep_id: int, prod_id: int, part_num: int, out_dir: str) -> str:
                 "-c:v", "libx264", "-pix_fmt", "yuv420p",
                 "-c:a", "aac", "-b:a", "192k", "-shortest", final_path], check=True)
     except sp.CalledProcessError:
-        # Fallback: no captions
+        # Fallback — no captions
         sp.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
                 "-i", silent, "-i", voice_path,
                 "-map", "0:v", "-map", "1:a",
-                "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", final_path],
-               check=True)
+                "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
+                "-shortest", final_path], check=True)
 
-    # Cleanup temp re-encoded clips only (_enc_N.mp4, _silent.mp4, _concat.txt)
-    # Do NOT delete _line_NNN.mp3 files — lipsync renderer needs them
-    for p in parts:
-        try:
-            os.remove(p)
-        except OSError:
-            pass
-    for tmp in ["_silent.mp4", "_cat.mp4", "_concat.txt", "_voice_concat.txt"]:
-        try:
-            os.remove(os.path.join(out_dir, tmp))
-        except OSError:
-            pass
+    # Cleanup temp files (keep _line_NNN.mp3 for lip-sync)
+    for tmp in [silent, "_cat.mp4", "_concat.txt", "_voice_concat.txt"]:
+        p = tmp if os.path.isabs(tmp) else os.path.join(out_dir, tmp)
+        try: os.remove(p)
+        except OSError: pass
 
-    # FIX: was a broken triple-ternary — ep_id is directly in scope
     db.update_episode(ep_id, status="rendered")
-    print(f"[editor] assembled -> {final_path}")
+    print(f"[editor] episode assembled → {final_path}")
     return final_path
 
 

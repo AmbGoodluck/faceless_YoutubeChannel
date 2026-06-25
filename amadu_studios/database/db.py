@@ -187,6 +187,10 @@ def init():
         _MIGRATIONS = [
             "ALTER TABLE characters ADD COLUMN reference_image_path TEXT DEFAULT ''",
             "ALTER TABLE locations  ADD COLUMN reference_image_path TEXT DEFAULT ''",
+            # Hollywood shot pipeline — audio-driven durations + explicit shot routing
+            "ALTER TABLE shots ADD COLUMN duration_sec  REAL    DEFAULT 5.0",
+            "ALTER TABLE shots ADD COLUMN audio_path    TEXT    DEFAULT ''",
+            "ALTER TABLE shots ADD COLUMN shot_class    TEXT    DEFAULT 'ambient'",
         ]
         for stmt in _MIGRATIONS:
             try:

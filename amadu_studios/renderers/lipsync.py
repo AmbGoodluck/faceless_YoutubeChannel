@@ -1,40 +1,40 @@
 """
 Amadu Studios — Lip-Sync Hybrid Renderer
 =========================================
-The most realistic output for a talking-character horror channel.
+Hollywood shot pipeline: every shot class routes to a different video model.
 
-How it works per shot:
-  Dialogue shots (CU, MCU, OTS, RXN, TWO)
-      → SadTalker or LatentSync on Replicate
-        Character portrait + character's audio lines → talking-head video
-        Characters actually move their mouths in sync with the voice.
+Shot class routing (set by timeline.py + shot_classifier.py):
 
-  Wide / environment shots (ES, WS, MWS, LOW, HIGH, BIRD, DUTCH)
-      → Wan2.1 image-to-video on Replicate
-        Adds real environmental motion: wind, shadows, camera push.
+  dialogue    (MCU/CU/ECU with speaking character)
+      → Lip-sync AI: MuseTalk / LatentSync / SadTalker / EchoMimic / Wav2Lip
+        Input: portrait image + character audio → talking-head video
+        Duration: driven by actual audio length (from timeline)
 
-  Insert / no-face shots (INS, SIL, REFL)
+  action      (motion + movement shots)
+      → Image-to-video AI: Wan2.1 / CogVideoX / LTX
+        Input: image + motion prompt → animated clip
+
+  establishing (first wide shot of scene)
+      → Slow cinematic: LTX-Video / Ken-Burns
+        Input: image → gentle push or pan
+
+  ambient     (inserts, silhouettes, environment detail)
       → Ken-Burns zoom (free, FFmpeg)
-        No face present so lip sync isn't needed.
+
+Lip-sync models (LIPSYNC_MODEL in config.py):
+  "musetalk"    — Open-source, fast, good quality. (Recommended)
+  "latentsync"  — Sharpest lip movement. bytedance/latentsync on Replicate.
+  "sadtalker"   — Established, reliable head movement. cjwbw/sadtalker.
+  "echomimic"   — Natural expressions + head pose. jhj0517/echomimic-v2.
+  "wav2lip"     — Classic, fastest. man1ky/wav2lip-hd.
 
 Cost (Replicate, June 2026):
+  MuseTalk   ~$0.01 per dialogue clip
+  LatentSync ~$0.02–0.03 per dialogue clip
   SadTalker  ~$0.01–0.02 per dialogue clip
-  LatentSync ~$0.02–0.03 per dialogue clip  (higher quality)
-  Wan2.1     ~$0.03–0.04 per wide clip
-  Total      ~$0.40–0.70 per 16-shot part
-
-Setup (one API token covers everything):
-  1. Create account at replicate.com
-  2. replicate.com/account/api-tokens → Create Token
-  3. pip install replicate --break-system-packages
-  4. Add to .env:   REPLICATE_API_TOKEN=r8_xxxxxxxxxx
-  5. In config.py:  VIDEO_MODE = "lipsync"
-     OR per-run:    VIDEO_PROVIDER=lipsync python amadu_studios/run.py --part 1
-
-Model selection (LIPSYNC_MODEL in config.py):
-  "sadtalker"   — Established, reliable. cjwbw/sadtalker on Replicate.
-  "latentsync"  — Newer, sharper lip movements. bytedance/latentsync.
-  "wav2lip"     — Classic, fastest. Slightly lower quality. man1ky/wav2lip-hd.
+  Wan2.1     ~$0.03–0.04 per motion clip
+  Ken-Burns  Free (FFmpeg)
+  Total      ~$0.40–0.70 per 18-shot part
 """
 from __future__ import annotations
 import os, time, base64, subprocess, json
@@ -58,12 +58,19 @@ INSERT_SHOT_TYPES   = {"INS", "SIL", "REFL", "RACK", "GRP"}
 # ── Replicate model IDs ───────────────────────────────────────────────────────
 
 LIPSYNC_MODELS = {
-    "sadtalker":  "cjwbw/sadtalker",
-    "latentsync": "bytedance/latentsync",
-    "wav2lip":    "man1ky/wav2lip-hd",
+    "musetalk":   "lucataco/musetalk",            # fast, open-source, good quality
+    "latentsync": "bytedance/latentsync",          # sharpest lips, newer
+    "sadtalker":  "cjwbw/sadtalker",               # reliable, natural head movement
+    "echomimic":  "jhj0517/echomimic-v2",          # natural expressions + head pose
+    "wav2lip":    "man1ky/wav2lip-hd",             # classic, fastest
 }
 
-MOTION_MODEL = "wavespeed-ai/wan-2.1-i2v-480p"   # same as replicate.py
+MOTION_MODELS = {
+    "wan":      "wavespeed-ai/wan-2.1-i2v-480p",  # best motion coherence
+    "cogvideo": "zsxkib/cogvideox-5b",
+    "ltx":      "lightricks/ltx-video",            # fastest, good for establishing shots
+}
+MOTION_MODEL = MOTION_MODELS["wan"]               # default for action shots
 
 REPLICATE_API = "https://api.replicate.com/v1"
 
@@ -259,49 +266,70 @@ class LipSyncRenderer(PollinationsRenderer):
         return tok
 
     def render_video(self, shot_id: int, image_path: str, prompt: str,
-                     out_dir: str, seconds: int = 5) -> str:
+                     out_dir: str, seconds: float = 5.0) -> str:
         out_path = os.path.join(out_dir, f"shot_{shot_id}.mp4")
         if os.path.exists(out_path):
             return out_path
 
-        # Determine shot type from DB
-        shot_type = "MS"
+        # Read shot_class and duration_sec from DB (set by timeline.py)
+        shot_class   = "ambient"
+        duration_sec = seconds
+        audio_path   = ""
         with db.tx() as conn:
-            row = conn.execute("SELECT shot_type FROM shots WHERE id=?", (shot_id,)).fetchone()
+            row = conn.execute(
+                "SELECT shot_type, shot_class, duration_sec, audio_path FROM shots WHERE id=?",
+                (shot_id,)).fetchone()
             if row:
-                shot_type = row["shot_type"] or "MS"
+                shot_class   = row["shot_class"]   or "ambient"
+                duration_sec = row["duration_sec"] or seconds
+                audio_path   = row["audio_path"]   or ""
 
-        # Route to the right renderer
-        if shot_type in DIALOGUE_SHOT_TYPES:
-            return self._render_lipsync(shot_id, image_path, out_dir, out_path, seconds)
-        elif shot_type in MOTION_SHOT_TYPES:
-            return self._render_motion(shot_id, image_path, prompt, out_dir, out_path, seconds)
+        # Route by shot class (set by dialogue timeline)
+        if shot_class == "dialogue":
+            return self._render_lipsync(
+                shot_id, image_path, out_dir, out_path,
+                seconds=duration_sec, audio_path=audio_path or None)
+
+        elif shot_class in ("action", "establishing"):
+            return self._render_motion(
+                shot_id, image_path, prompt, out_dir, out_path,
+                seconds=duration_sec)
+
         else:
-            # Inserts and unknown — Ken-Burns
-            return super().render_video(shot_id, image_path, prompt, out_dir, seconds)
+            # ambient / insert — Ken-Burns (free)
+            return super().render_video(shot_id, image_path, prompt, out_dir,
+                                        seconds=int(max(2, duration_sec)))
 
     # ── Lip-sync path ─────────────────────────────────────────────────────────
 
     def _render_lipsync(self, shot_id: int, image_path: str,
-                        out_dir: str, out_path: str, seconds: int) -> str:
-        token      = self._get_token()
-        audio_path = _get_character_audio(shot_id, out_dir)
+                        out_dir: str, out_path: str,
+                        seconds: float = 4.0, audio_path: str = None) -> str:
+        token = self._get_token()
+
+        # Use pre-resolved audio from timeline, fall back to legacy extraction
+        if not audio_path or not os.path.exists(audio_path):
+            audio_path = _get_character_audio(shot_id, out_dir)
 
         if not audio_path:
-            # No dialogue lines for this character — fall back to motion video
             print(f"[lipsync] shot {shot_id}: no character audio, falling back to motion")
             return self._render_motion(shot_id, image_path, "", out_dir, out_path, seconds)
 
         model_id = LIPSYNC_MODELS[self.lipsync_model_key]
-        print(f"[lipsync] shot {shot_id} ({self.lipsync_model_key}) lip-sync...")
+        print(f"[lipsync] shot {shot_id} ({self.lipsync_model_key}) "
+              f"lip-sync {seconds:.2f}s ...")
 
         try:
-            if self.lipsync_model_key == "sadtalker":
-                video_url = self._run_sadtalker(token, model_id, image_path, audio_path)
+            if self.lipsync_model_key == "musetalk":
+                video_url = self._run_musetalk(token, model_id, image_path, audio_path)
             elif self.lipsync_model_key == "latentsync":
                 video_url = self._run_latentsync(token, model_id, image_path, audio_path)
+            elif self.lipsync_model_key == "sadtalker":
+                video_url = self._run_sadtalker(token, model_id, image_path, audio_path)
+            elif self.lipsync_model_key == "echomimic":
+                video_url = self._run_echomimic(token, model_id, image_path, audio_path)
             else:
-                # wav2lip and others
+                # wav2lip and unknown
                 video_url = self._run_wav2lip(token, model_id, image_path, audio_path)
         except Exception as e:
             print(f"[lipsync] shot {shot_id} lip-sync failed ({e}), falling back to motion")
@@ -312,6 +340,28 @@ class LipSyncRenderer(PollinationsRenderer):
         db.log_render(shot_id, f"{self.name}/{self.lipsync_model_key}", 1, "success", out_path)
         print(f"[lipsync] shot {shot_id} lip-sync -> {out_path}")
         return out_path
+
+    def _run_musetalk(self, token: str, model_id: str,
+                      image_path: str, audio_path: str) -> str:
+        """MuseTalk — fast, open-source, good quality. lucataco/musetalk on Replicate."""
+        return _replicate_run(token, model_id, {
+            "face_image": _b64(image_path, "image/jpeg"),
+            "audio":      _b64(audio_path, "audio/mpeg"),
+            "bbox_shift": 0,       # 0 = natural mouth region
+            "fps":        25,
+        }, timeout_min=8)
+
+    def _run_echomimic(self, token: str, model_id: str,
+                       image_path: str, audio_path: str) -> str:
+        """EchoMimic v2 — natural expressions + head pose. jhj0517/echomimic-v2."""
+        return _replicate_run(token, model_id, {
+            "ref_image":  _b64(image_path, "image/jpeg"),
+            "audio":      _b64(audio_path, "audio/mpeg"),
+            "width":      512,
+            "height":     512,
+            "steps":      20,
+            "cfg":        2.5,
+        }, timeout_min=12)
 
     def _run_sadtalker(self, token: str, model_id: str,
                        image_path: str, audio_path: str) -> str:
@@ -349,8 +399,8 @@ class LipSyncRenderer(PollinationsRenderer):
     # ── Motion path ───────────────────────────────────────────────────────────
 
     def _render_motion(self, shot_id: int, image_path: str, prompt: str,
-                       out_dir: str, out_path: str, seconds: int) -> str:
-        """Wan2.1 image-to-video for wide/environment shots."""
+                       out_dir: str, out_path: str, seconds: float = 4.0) -> str:
+        """Wan2.1 image-to-video for action and establishing shots."""
         token  = self._get_token()
         motion = getattr(config, "AI_MOTION",
                          "slow cinematic camera push, eerie horror atmosphere")
@@ -360,7 +410,7 @@ class LipSyncRenderer(PollinationsRenderer):
             video_url = _replicate_run(token, MOTION_MODEL, {
                 "image":       _b64(image_path, "image/jpeg"),
                 "prompt":      full_prompt,
-                "num_frames":  max(33, seconds * 16),
+                "num_frames":  max(33, int(seconds * 16)),
                 "sample_steps": 20,
                 "fps":         16,
             }, timeout_min=12)
