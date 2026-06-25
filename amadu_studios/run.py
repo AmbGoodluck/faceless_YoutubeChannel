@@ -28,6 +28,20 @@ FIX LOG:
 from __future__ import annotations
 import os, sys, json, argparse, subprocess
 
+# Load .env from repo root before anything else
+def _load_env():
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+    if not os.path.exists(env_path):
+        return
+    with open(env_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
+_load_env()
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from amadu_studios.database import db
 from amadu_studios.agents import producer, director, writer, cinematographer, lighting
