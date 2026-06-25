@@ -1,8 +1,23 @@
-requests>=2.31.0
-Pillow>=10.0.0
-edge-tts>=6.1.0
-google-api-python-client>=2.100.0
-google-auth-oauthlib>=1.2.0
-# ffmpeg must be installed on the system (not a pip package):
-#   macOS:  brew install ffmpeg
-#   Ubuntu: sudo apt install ffmpeg
+# Core
+anthropic
+requests
+edge-tts
+
+# Database
+# (sqlite3 is built into Python)
+
+# Image / Video
+Pillow
+ffmpeg-python
+
+# Renderers (install only what you use)
+replicate          # for Replicate renderers (Wan2.1, SadTalker, etc.)
+# fal-client       # for fal.ai renderer
+
+# YouTube upload
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+
+# Utilities
+python-dotenv

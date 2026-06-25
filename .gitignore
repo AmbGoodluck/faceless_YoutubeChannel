@@ -1,14 +1,43 @@
+# Secrets — NEVER commit
 .env
+*.env
 client_secret.json
 token.json
-outputs/*
-!outputs/.gitkeep
-to_post/*
-!to_post/.gitkeep
+
+# Python
 __pycache__/
 *.pyc
-.DS_Store
-venv/
+*.pyo
 .venv/
-voice_samples/
-style_samples/
+venv/
+env/
+
+# Database
+*.db
+*.db-wal
+*.db-shm
+
+# Generated outputs (video/image/audio — too large for git)
+outputs/amadu/
+outputs/*/part*/
+*.mp4
+*.mp3
+*.wav
+*.jpg
+*.jpeg
+*.png
+*.ass
+
+# Keep script text outputs
+!outputs/**/narration.txt
+!outputs/**/script.txt
+!outputs/**/script.json
+!outputs/**/state.json
+!outputs/.gitkeep
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/

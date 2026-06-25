@@ -1,11 +1,12 @@
 """
 Lights Out Tales — pipeline configuration ($0 stack).
-Brand voice + generation settings live here so every episode comes out consistent.
+Brand voice + generation settings live here so every part comes out consistent.
 
 FREE TOOLS USED:
-  - Script:   Google Gemini API (free tier, no credit card)
+  - Script:   Claude API (Haiku — pennies/day)
   - Voice:    Microsoft Edge TTS (edge-tts, free, commercial-ok)
   - Visuals:  Pollinations.ai (free image generation, no API key)
+  - Video:    Google Veo 3.1 via Gemini API (free tier, Google AI Studio key)
   - Assembly: FFmpeg (free)
   - Upload:   YouTube Data API (free quota)
   - Schedule: GitHub Actions (free tier)
@@ -40,19 +41,24 @@ CLAUDE_ENDPOINT = "https://api.anthropic.com/v1/messages"
 CLAUDE_MODEL = "claude-haiku-4-5-20251001"   # cheapest model; bump to sonnet-4-6 / opus-4-8 for more quality
 CLAUDE_MAX_TOKENS = 8192                      # enough for a 6-8 min screenplay + 22 scene prompts + metadata
 
-# ---- Gemini (legacy, no longer used in the active path) ----
+# ---- Gemini — used ONLY for Veo video generation (free tier) ----
 GEMINI_MODEL = "gemini-2.5-flash"
 GEMINI_ENDPOINT = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
     f"{GEMINI_MODEL}:generateContent"
 )
-# Serialized story arcs: one 6-8 min episode per day, 10 episodes per story,
-# then a brand-new story starts the next day.
-EPISODES_PER_STORY = 10
-# ~6-8 min episodes. The model tends to under-deliver, so we aim high; with the
-# slowed read (~138 wpm) + pauses between screenplay lines this lands ~6.5-8.5 min.
-EPISODE_WORDS = (1150, 1450)
-SCENES_PER_VIDEO = 22          # distinct cinematic shots so a 7-min episode never feels static
+# Serialized story arcs: one 5-6 min PART per day. Story runs as many parts as it
+# needs (PARTS_PER_STORY), then a brand-new story starts. Think Netflix series chapters.
+PARTS_PER_STORY = 20           # each story = up to 20 parts (~1h 40m of content total)
+EPISODES_PER_STORY = PARTS_PER_STORY   # backward-compat alias
+
+# ~5-6 min parts. At ~140 wpm TTS + pauses this lands 5-6 min.
+PART_WORDS = (900, 1150)
+EPISODE_WORDS = PART_WORDS     # backward-compat alias
+
+SHORTFORM_WORDS = (250, 350)   # standalone short-form queue entries (unchanged)
+SHOTS_PER_PART = 18            # distinct cinematic shots per part
+SCENES_PER_VIDEO = SHOTS_PER_PART  # alias used by generate_script.py
 
 # ---------------------------------------------------------------- Voice (Edge TTS, FREE)
 # List voices with:  edge-tts --list-voices | grep en-
@@ -97,32 +103,65 @@ STYLES = {
 ACTIVE_STYLE = "photoreal"          # <-- change to switch the whole channel's look
 VISUAL_STYLE = STYLES[ACTIVE_STYLE]
 
-# ---------------------------------------------------------------- AI video (fal.ai, PAID)
-# "stills"  = free Ken-Burns zoom on the images (no cost) — current default
-# "runpod"  = open-source LTX/Wan image-to-video on your RunPod serverless GPU (cheap, ~$1/episode)
-# "ai"      = fal.ai image-to-video (managed, PAID per clip)
-VIDEO_MODE = "stills"
+# ---------------------------------------------------------------- Video generation
+# VIDEO_MODE sets the default renderer. Override per-run: VIDEO_PROVIDER=kling python ...
+#
+#  "stills"     FREE  Ken-Burns zoom (FFmpeg). No API key.
+#  "kling"      PAID  ~$0.14/clip. Kling AI direct API. Key: KLING_API_KEY
+#  "fal" / "ai" PAID  ~$0.05/clip. Kling via fal.ai.   Key: FAL_KEY
+#  "replicate"  PAID  ~$0.02-0.06/clip. Wan/CogVideoX/LTX. Key: REPLICATE_API_TOKEN
+#  "wan"               Shortcut for replicate + Wan2.1 model
+#  "cogvideo"          Shortcut for replicate + CogVideoX model
+#  "runpod"     PAID  ~$0.20/part on your serverless GPU. Key: RUNPOD_API_KEY
+#  "veo"        PAID  Google Veo 2 (requires GCP billing)
+VIDEO_MODE = "stills"   # Ken-Burns zoom — free, no API needed.
+
+# ---- Google Veo 3.1 (FREE — needs GEMINI_API_KEY from aistudio.google.com/apikey) ----
+VEO_MODEL = "veo-2.0-generate-001"   # publicly available on AI Studio free tier
+VEO_CLIP_SECONDS = 8                     # max clip length on free tier
+# Motion prompt appended to every shot: cinematic but subtle so character stays consistent
+VEO_MOTION = ("slow cinematic camera push-in, eerie horror atmosphere, "
+              "realistic motion, characters stay visually consistent, "
+              "no warping, no morphing, no on-screen text, "
+              "subtle environmental movement — breath, shadow, leaves")
 
 # ---- RunPod serverless (open-source video on a rented GPU) — see cloud/RUNPOD_SETUP.md
 RUNPOD_BASE = "https://api.runpod.ai/v2"
 RUNPOD_ENDPOINT_ID = ""              # your serverless endpoint id (set after deploying)
-RUNPOD_MODE = "comfyui"              # "comfyui" (worker-comfyui + workflow) or "simple" (ready endpoint)
-RUNPOD_WORKFLOW = "comfyui_workflows/ltx_i2v.json"   # export from ComfyUI: Save (API Format)
-RUNPOD_NODE_PROMPT = "positive"      # title hint for the positive CLIPTextEncode node
+RUNPOD_MODE = "comfyui"
+RUNPOD_WORKFLOW = "comfyui_workflows/ltx_i2v.json"
+RUNPOD_NODE_PROMPT = "positive"
 RUNPOD_FRAMES = 97                   # LTX ~24fps; 97 frames ≈ 4s
+
+# ---- Kling direct API (PAID ~$0.14/clip std, ~$0.28/clip pro) ----
+KLING_MODEL = "kling-v1-5"          # kling-v1 | kling-v1-5 | kling-v2
+KLING_MODE  = "std"                  # std | pro
+
+# ---- fal.ai Kling (PAID ~$0.05/clip) ----
+FAL_QUEUE_BASE = "https://queue.fal.run"
+FAL_MODEL = "fal-ai/kling-video/v1/standard/image-to-video"
+AI_CLIP_SECONDS = 5
+AI_MOTION = ("subtle cinematic camera motion, slow push-in, eerie horror atmosphere, "
+             "realistic, keep the character consistent, no warping, no morphing, no text")
+
+# ---- Replicate open-source models (PAID ~$0.02-0.06/clip) ----
+REPLICATE_MODEL = "wan"   # wan | cogvideo | ltx | stable | hunyuan
+
+# ---- Lip-sync hybrid renderer (RECOMMENDED for talking-character channels) ----
+# VIDEO_MODE = "lipsync" enables this renderer.
+# Dialogue shots (CU/MCU/OTS) → lip-sync model below
+# Wide shots (ES/WS/LOW/HIGH) → Wan2.1 motion
+# Insert shots (INS/SIL/REFL) → Ken-Burns (free)
+# All powered by Replicate — one REPLICATE_API_TOKEN covers everything.
+LIPSYNC_MODEL = "sadtalker"  # sadtalker | latentsync | wav2lip
+#   sadtalker  — reliable, good quality, ~$0.01/clip
+#   latentsync — sharper lip movement, ~$0.02/clip (recommended upgrade)
+#   wav2lip    — fastest, classic, ~$0.01/clip
 
 # ---- Cinematic render look (free, core ffmpeg filters) ----
 CROSSFADE = 0.5                       # seconds of crossfade dissolve between scenes
 # subtle contrast + slight desaturation + vignette + fine film grain:
 FILM_GRADE = "eq=contrast=1.06:saturation=0.92,vignette=PI/5,noise=alls=8:allf=t"
-FAL_QUEUE_BASE = "https://queue.fal.run"
-# Pick/confirm a model + its input fields at https://fal.ai/explore/image-to-video-apis
-# Cheaper: fal-ai/ltx-video  | balanced: fal-ai/kling-video/v1/standard/image-to-video
-# top end: fal-ai/veo2/image-to-video
-FAL_MODEL = "fal-ai/kling-video/v1/standard/image-to-video"
-AI_CLIP_SECONDS = 5
-AI_MOTION = ("subtle cinematic camera motion, slow push-in, eerie horror atmosphere, "
-             "realistic, keep the character consistent, no warping, no morphing, no text")
 
 # ---------------------------------------------------------------- TikTok clipping
 TIKTOK_CLIPS_PER_VIDEO = 3

@@ -1,26 +1,36 @@
 """
-Serialized-story manager. Tracks which story + episode we're on, generates a new
-10-episode story "bible" when one finishes, and hands the next episode's spec to the
-script generator. State persists in story_state.json (committed by the cloud workflow).
+Serialized-story manager. Tracks which story + part we're on, generates a full
+story "bible" (characters with locked appearance/costume, scene arcs) when a new
+story starts, and returns the next part's spec to the script generator.
 
-Flow: episode 1..10 of a story (continuity + cliffhangers), episode 10 resolves it,
-then the next run starts a brand-new story.
+State persists in story_state.json (committed by the cloud workflow).
+
+Format: "Parts" — each Part is 5–6 min. One Part per day. Story runs for
+PARTS_PER_STORY parts (e.g. 20), then a new story starts with Part 1.
+
+Character consistency is enforced via the bible: every character has a locked
+`appearance` and `costume` that gets injected verbatim into every shot prompt
+they appear in — preventing visual drift across parts.
 """
 from __future__ import annotations
 import os, sys, json, re
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
-from src import generate_script   # reuse _call_gemini + _extract_json
+from src import generate_script   # reuse gen_json + _call_llm
 
 STATE = "story_state.json"
 
 BIBLE_SYSTEM = """\
-You are the show-runner for a faceless YouTube horror series for a TEEN (13+) audience.
+You are the show-runner for "Lights Out Tales", a faceless YouTube horror series.
 You invent original, serialized horror stories — grounded, eerie, psychological, NO gore,
-advertiser-safe. Stories can follow kids/teens experiencing something they can't explain,
-or any horror premise. Each story runs exactly 10 episodes with a clear arc that builds
-tension and resolves in episode 10.
+advertiser-safe. Each story is structured like a Netflix limited series: it unfolds across
+multiple 5–6 minute "Parts", building tension across every part, with each Part ending on
+a cliffhanger. The finale resolves the story with an ambiguous, eerie conclusion.
+
+CHARACTER CONSISTENCY RULE: Every character must have a detailed physical description and
+a locked costume per story arc. These descriptions will be injected into every image prompt
+they appear in, ensuring visual consistency across all parts of the story.
 """
 
 
@@ -33,18 +43,38 @@ def _save(st):
 
 
 def _gen_bible() -> dict:
-    n = config.EPISODES_PER_STORY
-    prompt = f"""Invent a NEW original {n}-episode teen horror story. Return ONLY JSON:
+    n = config.PARTS_PER_STORY
+    prompt = f"""Invent a NEW original horror story for "Lights Out Tales".
+It will unfold across up to {n} parts (5–6 min each). Plan the arc.
+
+Return ONLY this JSON structure:
 {{
-  "story_title": "short, hooky series title",
-  "logline": "one sentence describing the whole story",
-  "setting": "where/when it takes place",
-  "characters": [ {{"name": "...", "role": "...", "gender": "male|female"}} (2-4 main characters) ],
-  "episodes": [ {n} objects: {{"n": 1.., "beat": "what happens this episode, advancing the arc;
-                episode {n} must resolve the story"}} ]
-}}"""
+  "story_title": "short, hooky series title (3-5 words)",
+  "logline": "one sentence that sets up the central mystery or dread",
+  "setting": "specific time and place — city, neighbourhood, time of year",
+  "characters": [
+    {{
+      "name": "character full name",
+      "role": "brief role (e.g. protagonist, antagonist, ally)",
+      "gender": "male|female",
+      "appearance": "detailed physical description: exact height, build (slim/athletic/stocky/etc), skin tone, hair colour and style, eye colour, distinctive facial features — written as a cinematographer would describe them for a casting brief. 2–3 sentences.",
+      "costume": "locked outfit for this story arc: specific clothing items, colours, materials, footwear. This is what they wear throughout the story unless a change is dramatic plot point."
+    }}
+  ],
+  "parts": [
+    {{
+      "n": 1,
+      "beat": "what happens in this part, advancing the arc; the last part must resolve the story"
+    }}
+  ]
+}}
+
+Include 2–4 main characters. Plan {n} parts total — the last part is the finale.
+Make the story genuinely unsettling through psychological dread, not gore."""
+
     bible = generate_script.gen_json(BIBLE_SYSTEM, prompt)
-    # assign a distinct, consistent voice to each character (Narrator uses TTS_VOICE)
+
+    # Assign a distinct, consistent TTS voice to each character.
     male = list(config.MALE_VOICES)
     female = list(config.FEMALE_VOICES)
     vm = {}
@@ -55,48 +85,64 @@ def _gen_bible() -> dict:
     return bible
 
 
-def next_episode_spec() -> dict:
-    """Return the spec for the NEXT episode. Does NOT advance the counter — call
-    commit() only after the episode is successfully generated, so failed runs don't
-    skip episodes. The story bible IS persisted immediately (so retries reuse it)."""
+def next_part_spec() -> dict:
+    """Return the spec for the NEXT part. Does NOT advance the counter — call
+    commit() only after the part is successfully generated. The story bible IS
+    persisted immediately so retries reuse it and don't regenerate."""
     st = _load()
-    if not st or st.get("episode", 0) >= config.EPISODES_PER_STORY:
+    if not st or st.get("part", 0) >= config.PARTS_PER_STORY:
         story_id = (st.get("story_id", 0) + 1) if st else 1
         bible = _gen_bible()
-        st = {"story_id": story_id, "episode": 0, "bible": bible, "last_recap": ""}
+        st = {"story_id": story_id, "part": 0, "bible": bible, "last_recap": ""}
         _save(st)
         print(f"[story] new story #{story_id}: {bible.get('story_title')}")
 
-    n = st["episode"] + 1                  # the episode we're about to make
+    n = st["part"] + 1          # the part we're about to make
     bible = st["bible"]
-    beats = bible.get("episodes", [])
-    beat = beats[n - 1]["beat"] if n - 1 < len(beats) else "continue the story"
+    parts = bible.get("parts", [])
+    beat = parts[n - 1]["beat"] if n - 1 < len(parts) else "continue the story"
+    total = len(parts)
+
+    # Build a character reference dict: {NAME_UPPER: "appearance. Wearing: costume."}
+    char_refs = {}
+    for c in bible.get("characters", []):
+        name_key = c["name"].upper()
+        appearance = c.get("appearance", "")
+        costume = c.get("costume", "")
+        char_refs[name_key] = f"{appearance} Wearing: {costume}."
 
     return {
-        "story_id": st["story_id"], "episode": n, "total": config.EPISODES_PER_STORY,
+        "story_id":    st["story_id"],
+        "part":        n,
+        "total":       total,
         "story_title": bible.get("story_title", "Untitled"),
-        "logline": bible.get("logline", ""),
-        "setting": bible.get("setting", ""),
-        "characters": bible.get("characters", []),
-        "voice_map": bible.get("voice_map", {}),
-        "beat": beat, "recap": st.get("last_recap", ""),
-        "is_finale": n == config.EPISODES_PER_STORY,
+        "logline":     bible.get("logline", ""),
+        "setting":     bible.get("setting", ""),
+        "characters":  bible.get("characters", []),
+        "char_refs":   char_refs,
+        "voice_map":   bible.get("voice_map", {}),
+        "beat":        beat,
+        "recap":       st.get("last_recap", ""),
+        "is_finale":   n == total,
     }
 
 
 def commit(recap: str):
-    """Mark the current episode as done (advance the counter) + store its recap."""
+    """Mark the current part as done (advance counter) and store its recap."""
     st = _load()
     if st:
-        st["episode"] += 1
+        st["part"] += 1
         st["last_recap"] = recap or ""
         _save(st)
 
 
-# backwards-compatible alias
+# ── backward-compat aliases ──────────────────────────────────────────────────
+def next_episode_spec() -> dict:
+    return next_part_spec()
+
 def save_recap(recap: str):
     commit(recap)
 
 
 if __name__ == "__main__":
-    print(json.dumps(next_episode_spec(), indent=2))
+    print(json.dumps(next_part_spec(), indent=2))

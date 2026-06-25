@@ -186,74 +186,151 @@ def load_narration(out_dir: str) -> str:
         return json.load(f)["narration"]
 
 
-def generate_episode(spec: dict) -> dict:
-    """Generate one 6-8 min serialized episode from a story spec (see src/story.py)."""
-    lo, hi = config.EPISODE_WORDS
-    chars = ", ".join(f"{c.get('name')} ({c.get('role')})" for c in spec.get("characters", []))
-    recap = spec.get("recap") or "(this is the first episode — no recap yet)"
-    finale = ("This is the FINALE — bring the story to a satisfying, eerie resolution."
-              if spec.get("is_finale") else "End on a strong cliffhanger for the next episode.")
-    user_prompt = f"""Write Episode {spec['episode']} of {spec['total']} of the horror series "{spec['story_title']}".
-Logline: {spec.get('logline','')}
-Setting: {spec.get('setting','')}
-Characters: {chars}
-Story so far (recap of previous episodes): {recap}
-WHAT THIS EPISODE COVERS: {spec['beat']}
+def _to_str(prompt) -> str:
+    """Normalise a scene prompt to a plain string regardless of what the LLM returned."""
+    if isinstance(prompt, str):
+        return prompt
+    if isinstance(prompt, dict):
+        # Claude sometimes returns {"description": "...", "shot": "..."} etc.
+        for key in ("description", "prompt", "shot", "scene", "text", "content"):
+            if key in prompt and isinstance(prompt[key], str):
+                return prompt[key]
+        # fallback: join all string values
+        return " ".join(str(v) for v in prompt.values() if v)
+    return str(prompt)
+
+
+def _inject_char_refs(scene_prompts: list, char_refs: dict) -> list[str]:
+    """For every shot prompt, prepend the appearance+costume of any character whose
+    name appears in it. This locks visual consistency across all parts."""
+    result = []
+    for raw in scene_prompts:
+        prompt = _to_str(raw)
+        injections = []
+        prompt_upper = prompt.upper()
+        for name_key, description in char_refs.items():
+            first_name = name_key.split()[0]
+            if first_name in prompt_upper or name_key in prompt_upper:
+                injections.append(f"[{name_key}: {description}]")
+        if injections:
+            result.append(" ".join(injections) + " " + prompt)
+        else:
+            result.append(prompt)
+    return result
+
+
+def generate_part(spec: dict) -> dict:
+    """Generate one 5–6 min serialized Part from a story spec (see src/story.py).
+    Characters are described with locked appearance in every shot prompt for
+    visual consistency across parts."""
+    lo, hi = config.PART_WORDS
+    part_n = spec.get("part", spec.get("episode", 1))  # support both keys
+    total = spec.get("total", config.PARTS_PER_STORY)
+    char_refs = spec.get("char_refs", {})
+
+    chars_block = "\n".join(
+        f"  - {c.get('name')} ({c.get('role')}): {c.get('appearance','')} Wearing: {c.get('costume','')}."
+        for c in spec.get("characters", [])
+    )
+    recap = spec.get("recap") or "(this is Part 1 — no recap yet)"
+    finale = ("This is the FINALE — bring the story to a satisfying, eerie, ambiguous resolution."
+              if spec.get("is_finale") else "End on a strong cliffhanger that makes the viewer need Part {next_n}.".format(next_n=part_n+1))
+
+    user_prompt = f"""Write Part {part_n} of {total} of the horror series "{spec['story_title']}".
+
+LOGLINE: {spec.get('logline','')}
+SETTING: {spec.get('setting','')}
+
+LOCKED CHARACTERS (use these exact descriptions in shot prompts):
+{chars_block}
+
+STORY SO FAR: {recap}
+WHAT THIS PART COVERS: {spec['beat']}
 {finale}
 
-This is a SHORT FILM screenplay — the characters SPEAK their own lines and act. Use a
-"Narrator" sparingly, only for brief scene-setting/action between dialogue.
+This is a SHORT FILM screenplay. Characters SPEAK their own lines. Use "Narrator"
+sparingly — only for brief scene-setting between dialogue beats.
 
 Return ONLY a JSON object with these keys:
-  "lines": array of screenplay lines IN ORDER ({lo}-{hi} words of dialogue+narration total),
-           each {{"speaker": "<a character name, or Narrator>", "text": "the spoken line"}}.
-           Mostly character dialogue that advances the scene; grounded teen horror, NO gore.
-           If episode > 1, the first line can be a short Narrator "Previously..." recap. End on the beat.
-  "scene_prompts": array of {config.SCENES_PER_VIDEO} CINEMATIC SHOT descriptions IN STORY ORDER
-           (one per beat). Describe each like a cinematographer: framing/shot size, the named
-           character(s) and their action, the LIGHTING (dramatic, motivated, shadows + rim),
-           the DEPTH (a foreground element, the sharp subject in midground, the background),
-           any LEADING LINES (road, corridor, wall) pulling the eye to the subject, the EMOTION
-           the viewer should feel in that beat, and the COLOUR/mood. Landscape 16:9 horror,
-           photoreal, no on-screen text.
-  "youtube_title": "{spec['story_title']} — Ep {spec['episode']}: <hooky subtitle>" under 70 chars
-  "youtube_description": 2-3 sentences with search keywords + a subscribe CTA, ending with an
-               "original fiction" note
-  "hashtags": array of 10-12 tags (no # symbol) mixing broad horror tags, niche tags, and the series name
-  "tiktok_caption": under 150 chars, teases THIS episode, ends on a curiosity hook
-  "thumbnail_text": 2-4 punchy uppercase words for the thumbnail
-  "pinned_comment": one engagement-bait question about this episode
-  "recap_for_next": 1-2 sentences summarizing what happened this episode (fed into the next one)
-  "poster_prompt": one striking MOVIE-POSTER key shot of the main character(s) — their faces
-           clearly visible looking toward camera, dramatic horror lighting, intense expression,
-           cinematic, landscape 16:9, photoreal, no on-screen text (used for the clickable thumbnail)"""
+
+"lines": array of screenplay lines IN ORDER ({lo}–{hi} words of dialogue+narration total).
+         Each: {{"speaker": "<character name or Narrator>", "text": "spoken line"}}.
+         Grounded horror, NO gore. If part > 1, open with a brief Narrator recap line.
+         End precisely on the beat above.
+
+"scene_prompts": array of exactly {config.SCENES_PER_VIDEO} CINEMATIC SHOT descriptions IN STORY ORDER.
+         Each shot MUST include ALL of the Hollywood 5 cinematography criteria:
+           1. SHOT TYPE & FRAMING: establishing/medium/close-up, camera angle
+           2. LIGHTING: dramatic motivated lighting — name the key light source and direction,
+              deep shadows, soft rim light separating the subject from the background
+           3. DEPTH: one out-of-focus foreground element, the subject tack-sharp in midground,
+              atmospheric haze or detail in the background
+           4. LEADING LINES: a specific environmental element (corridor, road, fence, beam of
+              light) that pulls the eye toward the subject
+           5. EMOTION & COLOUR: the exact mood/feeling of this beat + cinematic colour grade
+              (teal-and-amber, desaturated, crushed blacks, etc.)
+         Also: reference characters by NAME so the character injector can add their appearance.
+         Landscape 16:9, photoreal, no on-screen text.
+
+"youtube_title": "{spec['story_title']} — Part {part_n}: <hooky subtitle>" under 70 chars total
+
+"youtube_description": 2–3 sentences with naturally woven search keywords (scary story,
+         horror story, psychological horror, creepy, nosleep) + a subscribe CTA + series context
+         ("Part {part_n} of {total}") + "original fiction" note
+
+"hashtags": array of 10–12 tags without # — mix broad (horror, scarystories, creepy) and
+         niche (nosleep, horrortok, storytime) tags plus the series slug
+
+"tiktok_caption": under 150 chars, teases THIS part, ends on a curiosity hook
+
+"thumbnail_text": 2–4 punchy uppercase words for the YouTube thumbnail card
+
+"pinned_comment": one engagement-bait question about this part (drives comment replies)
+
+"recap_for_next": 1–2 sentences summarising what happened this part (fed into next part's prompt)
+
+"poster_prompt": one striking MOVIE-POSTER shot for the thumbnail — main character(s)
+         facing the camera, intense horror expression, dramatic backlit silhouette or
+         tight close-up, cinematic, landscape 16:9, photoreal, no on-screen text"""
 
     data = gen_json(config.BRAND_SYSTEM_PROMPT, user_prompt)
 
     lines = data.get("lines", [])
-    data["narration"] = " ".join(l.get("text", "") for l in lines)   # plain text (captions/preview)
+    data["narration"] = " ".join(l.get("text", "") for l in lines)
     data["voice_map"] = spec.get("voice_map", {})
+    data["char_refs"] = char_refs
 
-    sid, ep = spec["story_id"], spec["episode"]
-    data["id"] = f"{sid}.{ep}"
-    data["title"] = data.get("youtube_title", f"{spec['story_title']} Ep {ep}")
-    slug = f"s{sid}e{ep:02d}-{slugify(spec['story_title'])}"
+    # Inject character appearance into every scene prompt that mentions them
+    raw_prompts = data.get("scene_prompts", [])
+    data["scene_prompts"] = _inject_char_refs(raw_prompts, char_refs)
+    data["scene_prompts_raw"] = raw_prompts   # keep uninjected for debugging
+
+    sid = spec["story_id"]
+    data["id"] = f"{sid}.{part_n}"
+    data["title"] = data.get("youtube_title", f"{spec['story_title']} — Part {part_n}")
+    slug = f"s{sid}p{part_n:02d}-{slugify(spec['story_title'])}"
     data["slug"] = slug
 
     out_dir = os.path.join(config.OUTPUT_DIR, slug)
     os.makedirs(out_dir, exist_ok=True)
     with open(os.path.join(out_dir, "script.json"), "w") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-    # narration.txt = editable screenplay (one "SPEAKER: line" per row). Voice + captions read this.
+    # narration.txt = editable screenplay (SPEAKER: line). Voice + captions read this.
     with open(os.path.join(out_dir, "narration.txt"), "w") as f:
         f.write("\n".join(f"{l.get('speaker','Narrator').upper()}: {l.get('text','')}" for l in lines))
     with open(os.path.join(out_dir, "script.txt"), "w") as f:
         f.write(f"{data['title']}\n\n")
         f.write("\n".join(f"{l.get('speaker','Narrator').upper()}: {l.get('text','')}" for l in lines))
-        f.write("\n\n--- SCENES ---\n")
-        f.write("\n".join(f"{i+1}. {s}" for i, s in enumerate(data.get("scene_prompts", []))))
-    print(f"[script] {slug} ({len(data['narration'].split())} words, {len(lines)} lines)")
+        f.write("\n\n--- SHOTS ({n}) ---\n".format(n=len(data["scene_prompts"])))
+        f.write("\n".join(f"{i+1}. {s}" for i, s in enumerate(data["scene_prompts"])))
+    print(f"[script] {slug} ({len(data['narration'].split())} words, {len(lines)} lines, "
+          f"{len(data['scene_prompts'])} shots)")
     return data
+
+
+def generate_episode(spec: dict) -> dict:
+    """Backward-compat alias → generate_part."""
+    return generate_part(spec)
 
 
 def parse_screenplay(out_dir: str):
@@ -272,4 +349,4 @@ def parse_screenplay(out_dir: str):
 
 if __name__ == "__main__":
     from src import story
-    generate_episode(story.next_episode_spec())
+    generate_part(story.next_part_spec())
