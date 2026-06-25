@@ -530,12 +530,17 @@ def _assemble_episode(ep_id: int, prod_id: int, part_num: int,
 
     ass_path = os.path.join(out_dir, "captions.ass")
     rv._even_ass(narration, total, ass_path, W, H)
-    abs_ass  = os.path.abspath(ass_path).replace("\\", "/").replace(":", "\\:")
+
+    # Copy .ass to /tmp with a plain filename — FFmpeg can't handle colons in
+    # macOS paths inside the subtitles= filter argument.
+    import shutil, tempfile
+    tmp_ass = os.path.join(tempfile.gettempdir(), "amadu_captions.ass")
+    shutil.copy(ass_path, tmp_ass)
 
     try:
         sp.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
                 "-i", silent, "-i", voice_path,
-                "-vf", f"subtitles='{abs_ass}'",
+                "-vf", f"subtitles={tmp_ass}",
                 "-map", "0:v", "-map", "1:a",
                 "-c:v", "libx264", "-pix_fmt", "yuv420p",
                 "-c:a", "aac", "-b:a", "192k", "-shortest", final_path], check=True)
