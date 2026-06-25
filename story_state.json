@@ -1,6 +1,6 @@
 {
   "story_id": 1,
-  "episode": 1,
+  "episode": 2,
   "bible": {
     "story_title": "The Replay",
     "logline": "A high school student discovers she's living the same day over and over, and each loop reveals a darker truth about her classmates and a mysterious countdown she can't stop.",
@@ -76,5 +76,5 @@
       "DEV KAPOOR": "en-GB-RyanNeural"
     }
   },
-  "last_recap": "Maya Chen lived through Tuesday eleven times, each day ending in someone's death at 3:47 PM. When she tried to ask Dev Kapoor about a mysterious countdown, he warned her to stop asking questions. Now, as the twelfth loop begins, Maya realizes the real horror isn't the truck—it's the possibility that she might never leave Tuesday at all."
+  "last_recap": "Maya confirmed the loops are real. The truck doesn't follow a fixed location—it finds her. When she died in loop twelve at 2:19 PM, she reset to find her documentation erased. Dev revealed a horrifying truth: past a certain loop count, the memories vanish entirely. How many loops until Maya forgets she's looping at all?"
 }

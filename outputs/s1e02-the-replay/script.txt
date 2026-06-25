@@ -1,0 +1,80 @@
+The Replay — Ep 2: The Loop Remembers
+
+NARRATOR: Previously on The Replay: Maya Chen had lived through Tuesday eleven times. Each loop ended the same way—a truck at three forty-seven in the afternoon. And someone always died. When she asked Dev Kapoor what was happening, he told her to stop asking questions. Now the twelfth loop was beginning. But Maya was no longer asking. She was listening.
+NARRATOR: The alarm on Maya's phone went off at six forty-three AM. Tuesday morning. Again.
+MAYA: No. No, no, no.
+NARRATOR: She was standing in her bedroom. Autumn light through the window. The same angle as every other morning. She looked at her hands. Shaking.
+MAYA: Okay. Okay, this is real. This is happening.
+NARRATOR: She grabbed a notebook from her desk. Blank pages. She wrote the date and time at the top.
+MAYA: Six forty-three AM. Tuesday. Loop... twelve.
+NARRATOR: Downstairs, her mom was making coffee. Same mug. Same tired expression. Maya sat at the kitchen table and started writing. Every detail. Every conversation she could remember from the previous loops.
+MAYA'S MOM: You're up early. Big test today?
+MAYA: Yeah. Something like that.
+NARRATOR: At Westridge High, the hallway smelled like floor wax and someone's cheap cologne. Maya walked past the senior lockers, writing. Noting who was where. Jordan spotted her and waved.
+JORDAN: Yo, Chen. You look like you didn't sleep.
+MAYA: Did you... do you remember what we did yesterday?
+JORDAN: Yesterday? We had lunch. You were weird about the cafeteria pizza. Why?
+NARRATOR: Jordan had no memory. Of course she didn't. The loops were Maya's alone.
+MAYA: Never mind. What time do you have third period?
+JORDAN: Why are you asking me like you don't know? You literally scheduled our whole year together.
+NARRATOR: Maya wrote that down. Jordan was right. She had scheduled their classes. In loop one, they were in AP English together. Third period. With Ms. Hartwell.
+NARRATOR: The classroom was filling up when Maya got there. She sat in the back. She opened her notebook. And she watched Ms. Hartwell come through the door.
+MS. HARTWELL: Good morning, everyone. We're continuing our discussion of cyclical narratives. Interestingly, some stories... never really end. They just keep repeating.
+NARRATOR: Ms. Hartwell looked directly at Maya. Not in a hostile way. In a way that suggested she was speaking to Maya alone.
+MAYA: The patterns repeat, right? Like... the same events?
+MS. HARTWELL: Exactly. Patterns repeat until the protagonist learns what they need to learn. Or until they stop trying to break free. Some people just... accept the cycle.
+NARRATOR: After class, Maya caught up with Ms. Hartwell in the hallway.
+MAYA: Ms. Hartwell, can I ask you something? Do you ever feel like you're living the same day twice?
+MS. HARTWELL: Once. A long time ago. Not anymore.
+MAYA: What did you do? How did you stop?
+MS. HARTWELL: I stopped asking why and started asking who. That made all the difference.
+NARRATOR: Before Maya could ask what that meant, Ms. Hartwell walked away. Maya wrote it down anyway. Who. Not why.
+NARRATOR: In the library, Maya tried to avoid the halls where she knew the truck would be. She'd change her route. She'd eat lunch somewhere different. Maybe that would change the time.
+NARRATOR: At two PM, she was in the north corridor. Safe. Hours away from three forty-seven.
+NARRATOR: At two fifteen, she heard the sound. The distant rumble of an engine. Wrong side of the building.
+NARRATOR: At two nineteen, the truck crashed through the east wall of the gymnasium. The one on the opposite side of campus from where it always hit.
+NARRATOR: Maya was closer this time. Close enough to see the driver's face before it was too late. Close enough to understand that she couldn't outrun this.
+MAYA: Wait—
+NARRATOR: The impact was fast. The darkness after was faster. And then—
+NARRATOR: The alarm on Maya's phone went off at six forty-three AM. Tuesday morning. Loop thirteen.
+NARRATOR: She sat up in bed, gasping. Her notebook from this morning was gone. Every page she'd written in the twelfth loop—erased.
+MAYA: No. That's... that's not possible.
+NARRATOR: She grabbed a pen. She wrote it down again. Every detail she could remember. But her hand was shaking so badly the words barely made sense.
+NARRATOR: At school, she found Dev in the library. He was always in the library. Always in the same spot, reading the same book.
+MAYA: Dev, I need to know what's happening. You know something. You knew I would ask.
+DEV: I don't know anything.
+MAYA: You're lying. You told me to stop asking questions. Which means you already knew I was going to ask questions. Which means you knew this was happening before I told you.
+DEV: If I tell you, it gets worse. That's what happened to me. That's what happens to everyone.
+MAYA: Worse than living the same day over and over?
+DEV: Yeah. Much worse. Because then you start to understand. And once you understand, you can't unknow it.
+NARRATOR: Dev closed his book. He looked directly at Maya for the first time.
+DEV: How many loops have you been through?
+MAYA: Thirteen.
+DEV: Then we don't have much time. You need to write everything down. Every conversation. Every detail. Because once you reach a certain number, you stop remembering the loops at all. You just keep living them. Forever.
+NARRATOR: Maya felt her chest tighten.
+MAYA: How do you know that?
+DEV: Because I'm trying to remember my first loop. And I can't. I've been stuck in Tuesday for so long, I don't even know what day it really is anymore.
+
+--- SCENES ---
+1. {'shot': "Extreme close-up of an alarm clock display reading 6:43 AM. The red digits glow harsh against darkness. Pull back to reveal Maya's face in profile on a pillow, eyes snapping open. Practical bedroom light from a window frame the background. Shallow depth. Cold morning blue dominating the color palette. Dread."}
+2. {'shot': 'Medium shot: Maya sitting up in bed, her hand reaching for a blank notebook on the nightstand. Morning light cuts through venetian blinds, creating shadow bars across her body and the white pages. The notebook is sharp; her face is soft in shadow. Isolation. Autumn gold and deep blue-grey.'}
+3. {'shot': "Wide shot of the kitchen from the doorway. Maya's mom stands at the coffee maker (foreground, slightly out of focus). Maya sits at the table (sharp, midground), pen moving across a page. The kitchen window shows suburban autumn trees (background, muted). Rim light on Maya's hair. Mundane dread. Warm overhead lights against cold morning."}
+4. {'shot': 'Tracking shot down the school hallway. Students walking past. Maya moves through them (sharp in center frame), notebook open, writing as she walks. Harsh fluorescent lights overhead, fluorescent strips reflecting in locker doors. Depth of field isolates her from the background crowd. Surveillance-camera stillness. Institutional white and grey.'}
+5. {'shot': 'Medium two-shot: Jordan waving at Maya, who has stopped walking. Jordan is in soft focus behind her, smiling. Maya (sharp, in foreground) turns toward her with an expression of forced normalcy. Leading line: the hallway stretches behind Jordan. Unease masquerading as normal. Fluorescent institutional light.'}
+6. {'shot': "Close-up: Maya's notebook page, her handwriting visible. 'Loop 12.' The pen scratches another note. Pull back to reveal her sitting alone in the cafeteria (wide shot). Tables of other students in soft focus around her. She is the only figure in sharp focus, isolated in the center of the frame. Alienation. Warm lunch-room fluorescents contrasting cold autumn exterior light through windows."}
+7. {'shot': 'Medium shot: Ms. Hartwell entering the English classroom. She pauses at the door, her gaze drifting to the back where Maya sits. The overhead lights cast her features in shadow and rim light. The classroom is warm wood tones and scattered sunlight. Suspicious familiarity. Warm tungsten light, mysterious.'}
+8. {'shot': "Close-up of Ms. Hartwell's face as she speaks about cyclical narratives. Her eyes are tired, knowing. A slight smile suggests something unsaid. The fluorescent classroom light is unflattering, aging her face intentionally. Behind her, blurred students and a whiteboard. Quiet terror. Institutional fluorescence."}
+9. {'shot': "Two-shot: Maya and Ms. Hartwell in the hallway after class. Ms. Hartwell is walking away from Maya (frame right), her pace deliberate. Maya stands still (frame left), notebook at her chest, watching her leave. The hallway recedes behind them. Leading line: the hallway pulls attention toward Ms. Hartwell's departing figure. Puzzle without answers. Cold hallway light."}
+10. {'shot': 'Wide establishing shot of the library. Shelves create depth and leading lines pulling the eye to the center. Dev sits at a table in the midground (sharp focus), book open, unmoved. Maya approaches from the foreground (sharp). Other students blur in background. Institutional quiet. Warm library wood tones and filtered afternoon light.'}
+11. {'shot': "Close-up of Dev's face as he responds to Maya's questions. His expression is guarded, resigned. Soft library light illuminates half his face; the other half is shadowed. Behind him, a bookshelf out of focus. Burden of knowledge. Warm but melancholic light."}
+12. {'shot': 'Medium two-shot: Maya and Dev across a library table. The table surface (foreground) is sharp; both their faces are in focus, their expressions misaligned—her desperate, his weary. A bookshelf stands behind them (background, soft focus). Depth emphasizes the invisible distance between them despite physical closeness. Mute understanding. Library afternoon light, golden and tired.'}
+13. {'shot': "Extreme close-up of Dev's book cover (unreadable). The title is obscured. Pull out to a medium shot revealing Dev's hand holding it. His expression is grave. Background blurs into library shelves. The object itself is mysterious. Dread from the unknown. Warm, dimmed light."}
+14. {'shot': 'Medium shot: Dev leaning forward, his voice low. Foreground is the library table edge (slightly out of focus). His face is sharp, lit by a table lamp that casts his eyes in shadow—only the lower half of his face is visible. Maya listening (out of frame but implied). Burden. Intimate, isolated light in a public space.'}
+15. {'shot': "Wide shot of the school hallway at 2 PM. Sunlight through windows illuminates the corridor. Students walk casually. Maya is alone in the center frame (sharp), notebook at her side, trying to look calm. The hallway stretches behind her (soft focus). Sudden wrongness: a distant rumble vibrates the air. Dread building. Warm afternoon light that's about to be interrupted."}
+16. {'shot': "Reaction shot of Maya's face as she hears the engine sound. Her expression shifts from controlled to alarmed. Close-up, dramatic side lighting from a nearby window. The hallway is sharp behind her. The camera shakes slightly—imperceptible but unsettling. Horror dawning. Harsh directional light."}
+17. {'shot': 'Wide establishing shot: the gymnasium exterior. The truck crashes through the brick wall in slow motion (or fast, impact-cut editing). Debris explodes. The moment of impact is captured from a distance, showing the scale of the collision. Maya is visible in the foreground (sharp), close enough to feel the shockwave. Color drains from the frame as dust rises. Apocalyptic. Dust-choked grey and red brick.'}
+18. {'shot': "Close-up of the truck driver's face visible through the windshield for one frame—blank, emotionless, unseeing. The image is fractured by cracked glass. Maya's face reflects in the windshield. Quick, disorienting. Uncanny. Harsh reflected light, fragmented and surreal."}
+19. {'shot': "Extreme close-up of Maya's face as the truck makes contact. Her mouth opens. Time seems to slow. The frame is white, then black, then—"}
+20. {'shot': 'Extreme close-up: the same alarm clock display. 6:43 AM. But this time, the camera pulls back faster, revealing Maya gasping, bolt-upright in bed. Her notebook from the previous loop is gone. The nightstand is empty except for the clock. Dread that transcends logic. Cold blue morning light, harsher than before.'}
+21. {'shot': "Close-up of Maya's hand writing in a new notebook. Her handwriting is panicked, illegible in places. The pen trembles. Pull back to a medium shot showing her sitting on the edge of the bed, writing furiously, tears on her face. Isolation. Cold morning light through the window, creating shadows of window frames across her body."}
+22. {'shot': "Close-up of Dev's eyes as he speaks the final line. 'Forever.' His face is barely lit, mostly shadow. Behind him, library shelves recede into darkness. The frame is tight, intimate, and terrifying. His eyes reflect no hope. Finality. Dim library light, almost noir-like."}
