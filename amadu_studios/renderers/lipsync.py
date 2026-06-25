@@ -29,12 +29,21 @@ Lip-sync models (LIPSYNC_MODEL in config.py):
   "wav2lip"     — Classic, fastest. man1ky/wav2lip-hd.
 
 Cost (Replicate, June 2026):
-  MuseTalk   ~$0.01 per dialogue clip
-  LatentSync ~$0.02–0.03 per dialogue clip
-  SadTalker  ~$0.01–0.02 per dialogue clip
-  Wan2.1     ~$0.03–0.04 per motion clip
-  Ken-Burns  Free (FFmpeg)
-  Total      ~$0.40–0.70 per 18-shot part
+  Dialogue shots (lip-sync):
+    MuseTalk   ~$0.01/clip  ← recommended
+    LatentSync ~$0.02–0.03/clip
+    SadTalker  ~$0.01–0.02/clip
+    EchoMimic  ~$0.02/clip
+    Wav2Lip    ~$0.005/clip
+
+  Motion shots (action/establishing/ambient) — waterfall order:
+    LTX Video  ~$0.005/clip  ← tried first (cheapest)
+    CogVideoX  ~$0.01/clip
+    Wan2.1     ~$0.02/clip
+    Hunyuan    ~$0.05/clip
+    Ken-Burns  Free (FFmpeg) ← guaranteed final fallback
+
+  Typical cost per 18-shot part: ~$0.30–0.60
 """
 from __future__ import annotations
 import os, time, base64, subprocess, json
@@ -66,11 +75,18 @@ LIPSYNC_MODELS = {
 }
 
 MOTION_MODELS = {
-    "wan":      "wavespeed-ai/wan-2.1-i2v-480p",  # best motion coherence
-    "cogvideo": "zsxkib/cogvideox-5b",
-    "ltx":      "lightricks/ltx-video",            # fastest, good for establishing shots
+    "wan":      "wavespeed-ai/wan-2.1-i2v-480p",  # best motion coherence  ~$0.02/run
+    "cogvideo": "zsxkib/cogvideox-5b",             # good scene coherence   ~$0.01/run
+    "ltx":      "lightricks/ltx-video",            # fastest                ~$0.005/run
+    "hunyuan":  "tencent/hunyuan-video",           # highest quality        ~$0.05/run
 }
-MOTION_MODEL = MOTION_MODELS["wan"]               # default for action shots
+
+# Waterfall order: cheapest/fastest first, most expensive last, Ken-Burns as final fallback.
+# The pipeline tries each in sequence — stops as soon as one succeeds.
+#
+#  LTX  →  CogVideoX  →  Wan2.1  →  Hunyuan  →  Ken-Burns (free, FFmpeg)
+#
+MOTION_WATERFALL = ["ltx", "cogvideo", "wan", "hunyuan"]
 
 REPLICATE_API = "https://api.replicate.com/v1"
 
@@ -229,6 +245,63 @@ def _get_character_audio(shot_id: int, out_dir: str) -> str | None:
             pass
 
     return char_audio_path
+
+
+# ── Motion input builders (each model uses different field names) ─────────────
+
+def _motion_inputs(model_key: str, image_path: str, prompt: str,
+                   num_frames: int, seconds: float) -> dict:
+    """
+    Build the input dict for each image-to-video model.
+    Field names differ per model — this keeps _render_motion clean.
+    """
+    b64_img = _b64(image_path, "image/jpeg")
+
+    if model_key == "ltx":
+        # LTX-Video: fastest, good for establishing shots
+        return {
+            "image":           b64_img,
+            "prompt":          prompt,
+            "num_frames":      min(num_frames, 97),   # LTX max 97 frames
+            "num_inference_steps": 30,
+            "guidance_scale":  3.0,
+            "fps":             24,
+        }
+
+    if model_key == "cogvideo":
+        # CogVideoX-5B: scene-coherent, good colour matching
+        return {
+            "image":           b64_img,
+            "prompt":          prompt,
+            "num_frames":      min(num_frames, 49),   # CogVideo max 49 frames
+            "num_inference_steps": 50,
+            "guidance_scale":  6.0,
+            "fps":             8,
+        }
+
+    if model_key == "wan":
+        # Wan2.1 480p: best motion coherence, higher cost
+        return {
+            "image":           b64_img,
+            "prompt":          prompt,
+            "num_frames":      num_frames,
+            "sample_steps":    20,
+            "fps":             16,
+        }
+
+    if model_key == "hunyuan":
+        # Hunyuan Video: highest quality, slowest, most expensive
+        return {
+            "image":           b64_img,
+            "prompt":          prompt,
+            "num_frames":      min(num_frames, 129),  # Hunyuan typical max
+            "num_inference_steps": 50,
+            "flow_shift":      7.0,
+            "fps":             24,
+        }
+
+    # Fallback generic shape
+    return {"image": b64_img, "prompt": prompt, "num_frames": num_frames}
 
 
 # ── Main renderer ─────────────────────────────────────────────────────────────
@@ -396,29 +469,47 @@ class LipSyncRenderer(PollinationsRenderer):
             "resize_factor":  1,
         }, timeout_min=8)
 
-    # ── Motion path ───────────────────────────────────────────────────────────
+    # ── Motion path (waterfall) ───────────────────────────────────────────────
 
     def _render_motion(self, shot_id: int, image_path: str, prompt: str,
                        out_dir: str, out_path: str, seconds: float = 4.0) -> str:
-        """Wan2.1 image-to-video for action and establishing shots."""
+        """
+        Image-to-video waterfall for action / establishing / ambient shots.
+
+        Tries each model in MOTION_WATERFALL order — cheapest first.
+        Falls through to the next on any failure (API error, timeout, bad output).
+        Ken-Burns (free FFmpeg) is the guaranteed final fallback.
+
+        Order:  LTX (~$0.005)  →  CogVideoX (~$0.01)  →  Wan2.1 (~$0.02)
+                →  Hunyuan (~$0.05)  →  Ken-Burns (free)
+        """
         token  = self._get_token()
         motion = getattr(config, "AI_MOTION",
                          "slow cinematic camera push, eerie horror atmosphere")
         full_prompt = f"{motion}. {prompt[:150]}" if prompt else motion
+        num_frames  = max(33, int(seconds * 16))
 
-        try:
-            video_url = _replicate_run(token, MOTION_MODEL, {
-                "image":       _b64(image_path, "image/jpeg"),
-                "prompt":      full_prompt,
-                "num_frames":  max(33, int(seconds * 16)),
-                "sample_steps": 20,
-                "fps":         16,
-            }, timeout_min=12)
-            _download(video_url, out_path)
-            db.update_shot(shot_id, video_path=out_path, render_status="video_done")
-            db.log_render(shot_id, f"{self.name}/wan2.1", 1, "success", out_path)
-            print(f"[lipsync] shot {shot_id} motion (Wan2.1) -> {out_path}")
-            return out_path
-        except Exception as e:
-            print(f"[lipsync] shot {shot_id} Wan2.1 failed ({e}), falling back to Ken-Burns")
-            return super().render_video(shot_id, image_path, prompt, out_dir, seconds)
+        for model_key in MOTION_WATERFALL:
+            model_id = MOTION_MODELS[model_key]
+            print(f"[motion] shot {shot_id} trying {model_key} ({model_id})...")
+            try:
+                inputs  = _motion_inputs(model_key, image_path, full_prompt,
+                                         num_frames, seconds)
+                video_url = _replicate_run(token, model_id, inputs, timeout_min=15)
+                _download(video_url, out_path)
+                db.update_shot(shot_id, video_path=out_path, render_status="video_done")
+                db.log_render(shot_id, f"{self.name}/{model_key}", 1, "success", out_path)
+                print(f"[motion] shot {shot_id} {model_key} -> {out_path}")
+                return out_path
+            except Exception as e:
+                print(f"[motion] shot {shot_id} {model_key} failed: {e}")
+                next_idx = MOTION_WATERFALL.index(model_key) + 1
+                if next_idx < len(MOTION_WATERFALL):
+                    print(f"[motion]   → trying {MOTION_WATERFALL[next_idx]}...")
+                else:
+                    print(f"[motion]   → all models exhausted, using Ken-Burns (free)")
+
+        # All Replicate models failed — guaranteed free fallback
+        print(f"[motion] shot {shot_id} Ken-Burns fallback (free)")
+        return super().render_video(shot_id, image_path, prompt, out_dir,
+                                    seconds=int(max(2, seconds)))
